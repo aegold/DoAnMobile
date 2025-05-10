@@ -39,7 +39,7 @@ const LoginScreen = () => {
       const data = await response.json();
       console.log("Response data:", data);
 
-      if (response.ok) {
+      if (response.ok && data.token) {
         console.log("Đăng nhập thành công, đang lưu thông tin...");
         await login(data);
         console.log("Đã lưu thông tin, chuyển hướng...");

@@ -2,23 +2,17 @@ const express = require('express');
 const router = express.Router();
 const menuModel = require('../models/menuModel');
 const { authenticateToken, checkRole } = require('../middlewares/auth');
-const upload = require('../middlewares/upload');
+const { upload, handleUploadError } = require('../middlewares/upload');
 
 // Middleware kiểm tra quyền admin
 const checkAdmin = (req, res, next) => {
-  const user = req.headers['x-user'];
-  if (!user) {
+  if (!req.user) {
     return res.status(403).json({ error: 'Không tìm thấy thông tin người dùng' });
   }
-  try {
-    const parsedUser = JSON.parse(user);
-    if (parsedUser.role !== 'admin') {
-      return res.status(403).json({ error: 'Quyền bị từ chối, chỉ admin mới được phép' });
-    }
-    next();
-  } catch (err) {
-    return res.status(400).json({ error: 'Dữ liệu người dùng không hợp lệ' });
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Quyền bị từ chối, chỉ admin mới được phép' });
   }
+  next();
 };
 
 // API lấy danh sách danh mục
@@ -46,7 +40,7 @@ router.post('/categories', authenticateToken, checkRole(['admin']), upload.singl
   }
 });
 
-router.put('/categories/:id', checkAdmin, upload.single('image'), async (req, res) => {
+router.put('/categories/:id', authenticateToken, checkRole(['admin']), upload.single('image'), async (req, res) => {
   const { id } = req.params;
   const { name } = req.body;
   if (!name) {
@@ -61,7 +55,7 @@ router.put('/categories/:id', checkAdmin, upload.single('image'), async (req, re
   }
 });
 
-router.delete('/categories/:id', checkAdmin, async (req, res) => {
+router.delete('/categories/:id', authenticateToken, checkRole(['admin']), async (req, res) => {
   const { id } = req.params;
   try {
     await menuModel.deleteCategory(id);
@@ -114,7 +108,7 @@ router.post('/dishes', authenticateToken, checkRole(['admin']), upload.single('i
   }
 });
 
-router.put('/dishes/:id', checkAdmin, upload.single('image'), async (req, res) => {
+router.put('/dishes/:id', authenticateToken, checkRole(['admin']), upload.single('image'), async (req, res) => {
   const { id } = req.params;
   const { categoryId, name, description, price } = req.body;
   if (!categoryId || !name || price === undefined) {
@@ -129,7 +123,7 @@ router.put('/dishes/:id', checkAdmin, upload.single('image'), async (req, res) =
   }
 });
 
-router.delete('/dishes/:id', checkAdmin, async (req, res) => {
+router.delete('/dishes/:id', authenticateToken, checkRole(['admin']), async (req, res) => {
   const { id } = req.params;
   try {
     await menuModel.deleteDish(id);
@@ -223,14 +217,14 @@ router.post('/order', async (req, res) => {
 
 // API đăng ký
 router.post('/register', async (req, res) => {
-  const { email, password, name, address, phone, role = 'customer' } = req.body;
-  if (!email || !password || !name) {
-    return res.status(400).json({ error: 'Email, mật khẩu và tên là bắt buộc' });
+  const { username, password, name } = req.body;
+  if (!username || !password || !name) {
+    return res.status(400).json({ error: 'Username, mật khẩu và tên là bắt buộc' });
   }
 
   try {
-    const userId = await menuModel.registerUser(email, password, name, address, phone, role);
-    res.json({ message: 'Đăng ký thành công', userId });
+    const user = await menuModel.registerUser(username, password, name);
+    res.json({ message: 'Đăng ký thành công', user });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -238,15 +232,15 @@ router.post('/register', async (req, res) => {
 
 // API đăng nhập
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email và mật khẩu là bắt buộc' });
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username và mật khẩu là bắt buộc' });
   }
 
   try {
-    const user = await menuModel.loginUser(email, password);
+    const user = await menuModel.loginUser(username, password);
     if (!user) {
-      return res.status(401).json({ error: 'Email hoặc mật khẩu không đúng' });
+      return res.status(401).json({ error: 'Username hoặc mật khẩu không đúng' });
     }
     res.json({ message: 'Đăng nhập thành công', user });
   } catch (err) {

@@ -29,6 +29,7 @@ const authenticateToken = (req, res, next) => {
         return res.status(403).json({ error: 'Không tìm thấy thông tin người dùng' });
       }
 
+      // Thêm thông tin user vào request
       req.user = {
         id: user.id,
         username: user.username,

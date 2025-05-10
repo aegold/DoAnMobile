@@ -78,6 +78,11 @@ export const AuthProvider = ({ children }) => {
         throw new Error("Phiên đăng nhập đã hết hạn");
       }
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Có lỗi xảy ra");
+      }
+
       return response;
     } catch (error) {
       console.error("Lỗi trong fetchWithAuth:", error);
