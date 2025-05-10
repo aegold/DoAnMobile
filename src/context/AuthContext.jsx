@@ -58,9 +58,13 @@ export const AuthProvider = ({ children }) => {
 
       const headers = {
         ...options.headers,
-        "Content-Type": "application/json",
         Authorization: `Bearer ${user.token}`,
       };
+
+      // Chỉ set Content-Type nếu không phải FormData
+      if (!(options.body instanceof FormData)) {
+        headers["Content-Type"] = "application/json";
+      }
 
       console.log("Gửi request với headers:", headers);
       const response = await fetch(url, {

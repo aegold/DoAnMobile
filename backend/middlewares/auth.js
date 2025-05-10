@@ -13,6 +13,11 @@ const authenticateToken = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
     
+    // Kiểm tra thời gian hết hạn
+    if (decoded.exp && Date.now() >= decoded.exp * 1000) {
+      return res.status(401).json({ error: 'Token đã hết hạn' });
+    }
+    
     // Kiểm tra user trong database
     db.get('SELECT * FROM Users WHERE id = ?', [decoded.id], (err, user) => {
       if (err) {
@@ -34,6 +39,9 @@ const authenticateToken = (req, res, next) => {
     });
   } catch (error) {
     console.error('Token verification error:', error);
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Token đã hết hạn' });
+    }
     return res.status(403).json({ error: 'Token không hợp lệ' });
   }
 };
@@ -56,4 +64,4 @@ const checkRole = (roles) => {
 module.exports = {
   authenticateToken,
   checkRole
-}; 
+};

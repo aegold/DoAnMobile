@@ -9,6 +9,7 @@ import {
   TextInput,
   Modal,
   Image,
+  Platform,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { BASE_URL } from "../constants/api";
@@ -79,52 +80,64 @@ const CategoriesScreen = ({ navigation }) => {
       const url = editingCategory
         ? `${BASE_URL}/api/categories/${editingCategory.id}`
         : `${BASE_URL}/api/categories`;
-      const method = editingCategory ? "PUT" : "POST";
 
-      // Tạo FormData cho ảnh
       const formData = new FormData();
       formData.append("name", name.trim());
 
       if (selectedImage) {
         const imageUri = selectedImage.uri;
         const filename = imageUri.split("/").pop();
-        const match = /\.(\w+)$/.exec(filename);
-        const type = match ? `image/${match[1]}` : "image";
+
+        // Đảm bảo type luôn được set đúng
+        let type = "image/jpeg";
+        if (filename) {
+          const match = /\.(\w+)$/.exec(filename);
+          if (match) type = `image/${match[1].toLowerCase()}`;
+        }
+
+        // Xử lý URI cho cả Android và iOS
+        const finalUri =
+          Platform.OS === "ios" ? imageUri.replace("file://", "") : imageUri;
 
         formData.append("image", {
-          uri: imageUri,
-          name: filename,
-          type,
+          uri: finalUri,
+          type: type,
+          name: filename || `image_${Date.now()}.jpg`,
         });
       }
 
-      console.log("Sending data:", {
+      console.log("FormData:", {
         name: name.trim(),
         hasImage: !!selectedImage,
+        imageInfo: selectedImage
+          ? {
+              uri: selectedImage.uri,
+              type: selectedImage.type,
+              name: selectedImage.name,
+            }
+          : null,
       });
 
       const response = await fetchWithAuth(url, {
-        method,
+        method: editingCategory ? "PUT" : "POST",
         headers: {
           Accept: "application/json",
-          "Content-Type": "multipart/form-data",
         },
         body: formData,
       });
 
-      const responseData = await response.json();
-      console.log("Server response:", responseData);
-
-      if (response.ok) {
-        await fetchCategories();
-        setModalVisible(false);
-        resetForm();
-      } else {
-        Alert.alert("Lỗi", responseData.error || "Không thể lưu danh mục");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Lỗi khi lưu danh mục");
       }
+
+      await fetchCategories();
+      setModalVisible(false);
+      resetForm();
+      Alert.alert("Thành công", "Đã lưu danh mục thành công");
     } catch (err) {
-      console.error("Lỗi khi lưu danh mục:", err);
-      Alert.alert("Lỗi", "Có lỗi xảy ra khi lưu danh mục");
+      console.error("Chi tiết lỗi khi lưu danh mục:", err);
+      Alert.alert("Lỗi", err.message || "Có lỗi xảy ra khi lưu danh mục");
     }
   };
 

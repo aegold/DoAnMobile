@@ -7,7 +7,8 @@ const db = require('./db/db');
 const upload = require('./middlewares/upload');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ['http://localhost:3000'];
 
 // Middleware log request
 app.use((req, res, next) => {
@@ -17,19 +18,30 @@ app.use((req, res, next) => {
 
 // Cấu hình CORS chi tiết
 app.use(cors({
-  origin: '*',
+  origin: function(origin, callback) {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  credentials: true,
+  maxAge: 86400 // Cache preflight requests for 24 hours
 }));
 
 // Middleware
-app.use(express.json());
-app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use(express.json({ limit: '10mb' }));
+app.use('/public', express.static(path.join(__dirname, 'public'), {
+  maxAge: '1d',
+  etag: true
+}));
 
 // Middleware xử lý timeout
+const TIMEOUT = process.env.REQUEST_TIMEOUT || 5000;
 app.use((req, res, next) => {
-  res.setTimeout(5000, () => {
+  res.setTimeout(TIMEOUT, () => {
     console.error('Request timeout');
     res.status(408).json({ error: 'Request timeout' });
   });
@@ -39,9 +51,10 @@ app.use((req, res, next) => {
 // Middleware xử lý lỗi
 app.use((err, req, res, next) => {
   console.error('Error:', err);
-  res.status(500).json({
-    error: 'Internal Server Error',
-    message: err.message
+  const statusCode = err.statusCode || 500;
+  res.status(statusCode).json({
+    error: statusCode === 500 ? 'Internal Server Error' : err.message,
+    message: process.env.NODE_ENV === 'development' ? err.stack : undefined
   });
 });
 

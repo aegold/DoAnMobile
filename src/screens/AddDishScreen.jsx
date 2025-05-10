@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Alert,
   Image,
+  Platform,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { useAuth } from "../context/AuthContext";
@@ -108,13 +109,22 @@ const AddDishScreen = ({ route, navigation }) => {
       if (selectedImage) {
         const imageUri = selectedImage.uri;
         const filename = imageUri.split("/").pop();
-        const match = /\.(\w+)$/.exec(filename);
-        const type = match ? `image/${match[1]}` : "image";
+
+        // Đảm bảo type luôn được set đúng
+        let type = "image/jpeg";
+        if (filename) {
+          const match = /\.(\w+)$/.exec(filename);
+          if (match) type = `image/${match[1].toLowerCase()}`;
+        }
+
+        // Xử lý URI cho cả Android và iOS
+        const finalUri =
+          Platform.OS === "ios" ? imageUri.replace("file://", "") : imageUri;
 
         formData.append("image", {
-          uri: imageUri,
-          name: filename,
-          type,
+          uri: finalUri,
+          type: type,
+          name: filename || `image_${Date.now()}.jpg`,
         });
       }
 
@@ -124,13 +134,19 @@ const AddDishScreen = ({ route, navigation }) => {
         description: description ? description.trim() : "",
         price,
         hasImage: !!selectedImage,
+        imageInfo: selectedImage
+          ? {
+              uri: selectedImage.uri,
+              type: selectedImage.type,
+              name: selectedImage.name,
+            }
+          : null,
       });
 
       const response = await fetchWithAuth(url, {
         method: "POST",
         headers: {
           Accept: "application/json",
-          "Content-Type": "multipart/form-data",
         },
         body: formData,
       });
