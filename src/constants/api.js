@@ -1,4 +1,4 @@
-const BASE_URL = 'http://192.168.1.5:3000';
+const BASE_URL = 'http://192.168.1.25:3000';
 //192.168.90.56
 //192.168.1.8
 //192.168.1.5
@@ -19,5 +19,5 @@ const API_ENDPOINTS = {
 };
 
 console.log("API Endpoints:", API_ENDPOINTS);
-  
+
 export { BASE_URL, API_ENDPOINTS };

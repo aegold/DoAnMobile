@@ -3,6 +3,11 @@ const cors = require('cors');
 const path = require('path');
 const menuRoutes = require('./routes/menu');
 const authRoutes = require('./routes/authRoutes');
+const categoriesRoutes = require('./routes/categoriesRoutes');
+const dishesRoutes = require('./routes/dishesRoutes');
+const cartRoutes = require('./routes/cartRoutes');
+const manageRoutes = require('./routes/manageRoutes');
+
 const db = require('./db/db');
 const upload = require('./middlewares/upload');
 
@@ -60,7 +65,13 @@ app.use((err, req, res, next) => {
 
 // Đăng ký routes
 app.use('/api', menuRoutes);
+app.use('/api', dishesRoutes);
+app.use('/api', categoriesRoutes);
+app.use('/api', cartRoutes);
+app.use('/api', manageRoutes);
 app.use('/api/auth', authRoutes);
+
+
 
 // Khởi động server
 app.listen(PORT, '0.0.0.0', () => {
