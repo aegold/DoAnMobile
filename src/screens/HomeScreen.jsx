@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,14 +6,18 @@ import {
   TextInput,
   Dimensions,
   Pressable,
+  FlatList,
+  SafeAreaView,
+  StatusBar,
+  TouchableOpacity
 } from "react-native";
+import { useAuth } from "../context/AuthContext";
 import Swiper from "react-native-swiper";
+import { BASE_URL } from "../constants/api";
 import { Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 const { width } = Dimensions.get("window");
-
-// Tính chiều cao để giữ tỷ lệ 4:3 (800x600)
 const imageWidth = width - 40;
 const imageHeight = (imageWidth * 3) / 4;
 
@@ -28,7 +32,27 @@ try {
 }
 
 const HomeScreen = ({ navigation }) => {
+  const { fetchWithAuth } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [combos, setCombos] = useState([]);
+
+  useEffect(() => {
+    fetchCombos();
+  }, []);
+
+  const fetchCombos = async () => {
+    try {
+      const response = await fetchWithAuth(`${BASE_URL}/api/dishes`);
+      if (response.ok) {
+        const data = await response.json();
+        setCombos(data);
+      }
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách combo:", error);
+      Alert.alert("Lỗi", "Có lỗi xảy ra khi lấy danh sách combo");
+    }
+  };
 
   const handleSearch = () => {
     if (searchQuery.trim().length > 0) {
@@ -38,39 +62,72 @@ const HomeScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Chào mừng đến với nhà hàng!</Text>
+      <StatusBar barStyle="dark-content" />
+      {/* Header */}
+      <SafeAreaView style={styles.header}>
+        <View style={styles.headerContent}>
+          <View style={styles.leftHeader} />
+          <Image
+            source={require('../../assets/img/logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <TouchableOpacity style={styles.cartButton}>
+            <Ionicons name="cart-outline" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+
+      {/* Search Bar */}
       <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchBar}
-          placeholder="Tìm kiếm món ăn..."
-          placeholderTextColor="#888"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          onSubmitEditing={handleSearch}
-        />
-        <Pressable style={styles.searchButton} onPress={handleSearch}>
-          <Ionicons name="search" size={24} color="#fff" />
-        </Pressable>
+        <View style={styles.searchBar}>
+          <Ionicons name="search-outline" size={20} color="#666" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Tìm kiếm"
+            placeholderTextColor="#666"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
       </View>
 
-      <Swiper
-        style={[styles.swiper, { height: imageHeight + 20 }]}
-        autoplay
-        loop
-      >
-        <View style={styles.slide}>
-          <Image source={img1} style={styles.image} resizeMode="cover" />
-        </View>
-        <View style={styles.slide}>
-          <Image source={img2} style={styles.image} resizeMode="cover" />
-        </View>
-        <View style={styles.slide}>
-          <Image source={img3} style={styles.image} resizeMode="cover" />
-        </View>
-      </Swiper>
-      <Text style={styles.description}>
-        Khám phá thực đơn đa dạng với các món ăn ngon miệng!
-      </Text>
+      <FlatList
+        data={combos}
+        keyExtractor={(item) => item.id.toString()}
+        ListHeaderComponent={
+          <>
+            <Swiper
+              style={[styles.swiper, { height: imageHeight }]}
+              autoplay
+              loop
+            >
+              <View style={styles.slide}>
+                <Image source={img1} style={styles.image} resizeMode="cover" />
+              </View>
+              <View style={styles.slide}>
+                <Image source={img2} style={styles.image} resizeMode="cover" />
+              </View>
+              <View style={styles.slide}>
+                <Image source={img3} style={styles.image} resizeMode="cover" />
+              </View>
+            </Swiper>
+            <Text style={styles.comboTitle}>COMBO</Text>
+          </>
+        }
+        renderItem={({ item }) => (
+          <TouchableOpacity>
+          <View style={styles.comboItem}>
+            <Image
+              source={{ uri: `${BASE_URL}${item.image}` }}
+              style={styles.image}
+              resizeMode="cover"
+            />
+          </View>
+          </TouchableOpacity>
+        )}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      />
     </View>
   );
 };
@@ -78,68 +135,84 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 15,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#fff",
   },
   header: {
-    fontSize: 28,
-    fontWeight: "700",
-    textAlign: "center",
-    marginVertical: 15,
-    color: "#333",
+    backgroundColor: "#E31837",
+    height: 100
+  },
+  headerContent: {
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+  },
+  leftHeader: {
+    width: 40,
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    position: 'absolute',
+    left: '50%',
+    marginLeft: -40,
+  },
+  cartButton: {
+    width: 60,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 10,
+    padding: 20,
   },
   searchBar: {
-    flex: 1,
-    backgroundColor: "#fff",
-    borderRadius: 25,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    fontSize: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  searchButton: {
-    backgroundColor: "#e91e63",
-    borderRadius: 25,
-    padding: 12,
-    marginLeft: 10,
-    justifyContent: "center",
+    flexDirection: "row",
     alignItems: "center",
+    backgroundColor: "#FFE8E8",
+    borderRadius: 50,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    height: 40
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: "#000",
+    padding: 0,
   },
   swiper: {
-    marginVertical: 10,
+    marginVertical: 20,
+    
   },
   slide: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#fff",
-    borderRadius: 15,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
+    
   },
   image: {
     width: imageWidth,
     height: imageHeight,
     borderRadius: 15,
   },
-  description: {
-    fontSize: 16,
-    textAlign: "center",
-    marginTop: 15,
-    color: "#555",
-    fontStyle: "italic",
+  comboTitle: {
+    fontSize: 35,
+    fontWeight: "bold",
+    marginVertical: 10,
+    marginTop: 50,
+    color: "#E60023",
+    alignSelf: "center",
+    justifyContent: "center",
+  },
+  comboItem: {
+    marginBottom: 30,
+    alignItems: "center",
   },
 });
 

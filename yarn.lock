@@ -1142,6 +1142,16 @@
   dependencies:
     "@types/hammerjs" "^2.0.36"
 
+"@expo-google-fonts/inter@^0.3.0":
+  version "0.3.0"
+  resolved "https://registry.npmjs.org/@expo-google-fonts/inter/-/inter-0.3.0.tgz"
+  integrity sha512-x77HsdpizmZFNZ8nMd7hsNah/MyxhLmihZQEyIkB473jskBcXIpsyf+tVVLXvXEhtnpGx8zZ2XAe9u+i0qvIEw==
+
+"@expo-google-fonts/sen@^0.3.0":
+  version "0.3.0"
+  resolved "https://registry.npmjs.org/@expo-google-fonts/sen/-/sen-0.3.0.tgz"
+  integrity sha512-cW0ugYe0P+cHNfgqmO5pvcys9jlO7c3mkMSDLnTP3/KSbzfElmf1eG1Kc/Vliw+Rzt2AD8p+Jo57i/bpBadm0g==
+
 "@expo/bunyan@^4.0.0":
   version "4.0.1"
   resolved "https://registry.npmjs.org/@expo/bunyan/-/bunyan-4.0.1.tgz"
@@ -3095,14 +3105,7 @@ expo-file-system@~18.0.12:
   dependencies:
     web-streams-polyfill "^3.3.2"
 
-expo-font@*, expo-font@^13.3.1:
-  version "13.3.1"
-  resolved "https://registry.npmjs.org/expo-font/-/expo-font-13.3.1.tgz"
-  integrity sha512-d+xrHYvSM9WB42wj8vP9OOFWyxed5R1evphfDb6zYBmC1dA9Hf89FpT7TNFtj2Bk3clTnpmVqQTCYbbA2P3CLg==
-  dependencies:
-    fontfaceobserver "^2.1.0"
-
-expo-font@~13.0.4:
+expo-font@*, expo-font@~13.0.4:
   version "13.0.4"
   resolved "https://registry.npmjs.org/expo-font/-/expo-font-13.0.4.tgz"
   integrity sha512-eAP5hyBgC8gafFtprsz0HMaB795qZfgJWqTmU0NfbSin1wUuVySFMEPMOrTkTgmazU73v4Cb4x7p86jY1XXYUw==

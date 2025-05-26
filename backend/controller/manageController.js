@@ -27,8 +27,18 @@ const getAllOrders = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 }
+
+const getAllUser = async (req, res) => {
+  try {
+    const user = await menuModel.getAllUser();
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
 module.exports = {
     getUserById,
     getAllOrders,
+    getAllUser,
     // Thêm các hàm khác nếu cần
 }

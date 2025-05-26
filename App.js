@@ -14,51 +14,54 @@ import EditDishScreen from './src/screens/EditDishScreen';
 import Toast from 'react-native-toast-message';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
+import { FontProvider } from './src/context/FontContext';
 const Stack = createStackNavigator();
 
 const App = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
-      <AuthProvider>
-        <CartProvider>
-          <NavigationContainer>
-            <Stack.Navigator>
-              <Stack.Screen 
-              name="Welcome"
-              component={WelcomeScreen}
-              options={{ headerShown: false }}
-              />
-              <Stack.Screen name="Login" 
-              component={LoginScreen} 
-              options={{ headerShown: false }} />
-              <Stack.Screen name="Register" 
-              component={RegisterScreen} 
-              options={{ headerShown: false }} />
-              <Stack.Screen
-                name="BottomTabNavigator"
-                component={BottomTabNavigator}
+      <FontProvider>
+        <AuthProvider>
+          <CartProvider>
+            <NavigationContainer>
+              <Stack.Navigator>
+                <Stack.Screen 
+                name="Welcome"
+                component={WelcomeScreen}
                 options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="ManageDishes"
-                component={ManageDishesScreen}
-                options={{ title: 'Quản lý món ăn' }}
-              />
-              <Stack.Screen
-                name="AddDish"
-                component={AddDishScreen}
-                options={{ title: 'Thêm món ăn' }}
-              />
-              <Stack.Screen
-                name="EditDish"
-                component={EditDishScreen}
-                options={{ title: 'Chỉnh sửa món ăn' }}
-              />
-            </Stack.Navigator>
-          </NavigationContainer>
-        </CartProvider>
-      </AuthProvider>
+                />
+                <Stack.Screen name="Login" 
+                component={LoginScreen} 
+                options={{ headerShown: false }} />
+                <Stack.Screen name="Register" 
+                component={RegisterScreen} 
+                options={{ headerShown: false }} />
+                <Stack.Screen
+                  name="BottomTabNavigator"
+                  component={BottomTabNavigator}
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="ManageDishes"
+                  component={ManageDishesScreen}
+                  options={{ title: 'Quản lý món ăn' }}
+                />
+                <Stack.Screen
+                  name="AddDish"
+                  component={AddDishScreen}
+                  options={{ title: 'Thêm món ăn' }}
+                />
+                <Stack.Screen
+                  name="EditDish"
+                  component={EditDishScreen}
+                  options={{ title: 'Chỉnh sửa món ăn' }}
+                />
+              </Stack.Navigator>
+            </NavigationContainer>
+          </CartProvider>
+        </AuthProvider>
+      </FontProvider>
       <Toast />
     </SafeAreaView>
   );
@@ -67,7 +70,7 @@ const App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fff',
   },
 });
 

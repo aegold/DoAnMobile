@@ -60,6 +60,7 @@ async function setupDatabase() {
         price REAL NOT NULL,
         image TEXT NOT NULL,
         FOREIGN KEY (dishId) REFERENCES Dishes(id)
+        
       )
     `);
     // Tạo bảng Users
@@ -68,7 +69,10 @@ async function setupDatabase() {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
-        name TEXT NOT NULL,
+        fullname TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        phone NUMBERIC NOT NULL UNIQUE,
+        address TEXT NOT NULL,
         role TEXT DEFAULT 'user'
       )
     `);
@@ -95,15 +99,32 @@ async function setupDatabase() {
         FOREIGN KEY (dish_id) REFERENCES Dishes(id)
       )
     `);
+    
 
     // Thêm dữ liệu mẫu vào Categories
     await runSQL(
       'INSERT INTO Categories (id, name, image) VALUES (?, ?, ?)',
-      [1, 'Món khai vị', '/public/images/appetizers.jpg']
+      [1, 'Hamburger', '/public/images/hamburger-icon.png']
     );
     await runSQL(
       'INSERT INTO Categories (id, name, image) VALUES (?, ?, ?)',
-      [2, 'Món chính', '/public/images/main_dishes.jpg']
+      [2, 'Pizza', '/public/images/pizza-icon.png']
+    );
+    await runSQL(
+      'INSERT INTO Categories (id, name, image) VALUES (?, ?, ?)',
+      [3, 'Chicken', '/public/images/chicken-icon.jpg']
+    );
+    await runSQL(
+      'INSERT INTO Categories (id, name, image) VALUES (?, ?, ?)',
+      [4, 'Chips', '/public/images/chips-icon.png']
+    );
+    await runSQL(
+      'INSERT INTO Categories (id, name, image) VALUES (?, ?, ?)',
+      [5, 'Noodle', '/public/images/noodle-icon.png']
+    );
+    await runSQL(
+      'INSERT INTO Categories (id, name, image) VALUES (?, ?, ?)',
+      [6, 'Chips', '/public/images/chips.png']
     );
 
     // Thêm dữ liệu mẫu vào Dishes
@@ -116,18 +137,24 @@ async function setupDatabase() {
       [2, 1, 'Chả giò', 'Chả giò chiên giòn', 30000, '/public/images/cha_gio.jpg']
     );
 
+    await runSQL(
+      'INSERT INTO Dishes (id, category_id, name, description, price, image) VALUES (?, ?, ?, ?, ?, ?)',
+      [3, 3, 'Combo gia đình ', '6 miếng gà', 180000, '/public/images/cha_gio.jpg']
+    );
+    
+
     // Mã hóa mật khẩu cho admin và customer
     const adminPassword = await bcrypt.hash('admin123', 10);
     const customerPassword = await bcrypt.hash('customer123', 10);
 
     // Thêm dữ liệu mẫu vào Users với mật khẩu đã mã hóa
     await runSQL(
-      'INSERT INTO Users (username, password, name, role) VALUES (?, ?, ?, ?)',
-      ['admin', adminPassword, 'Administrator', 'admin']
+      'INSERT INTO Users (username, password, fullname, email, phone, address, role) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      ['admin', adminPassword, 'Administrator', 'admin@gmail.com', '0909090909', 'Hà Nội', 'admin']
     );
     await runSQL(
-      'INSERT INTO Users (username, password, name, role) VALUES (?, ?, ?, ?)',
-      ['customer', customerPassword, 'Khách hàng', 'user']
+      'INSERT INTO Users (username, password, fullname, email, phone, address, role) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      ['customer', customerPassword, 'Khách hàng', 'customer@gmail.com', '0904440436', 'Hà Nội', 'user']
     );
 
     console.log('Load database successfully!');

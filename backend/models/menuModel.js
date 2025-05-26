@@ -150,10 +150,19 @@ const getAllOrders = () => {
     });
   });
 };
+const getAllUser = () => {
+  return new Promise((resolve, reject) => {
+    db.all('SELECT * FROM Users', (err, rows) => {
+      if (err) reject(err);
+      resolve(rows);
+    });
+  });
+};
 
 module.exports = {
   // registerUser,
   // loginUser,
   getUserById,
   getAllOrders,
+  getAllUser,
 };

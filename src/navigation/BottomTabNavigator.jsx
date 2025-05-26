@@ -1,7 +1,8 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
-import { Ionicons } from "@expo/vector-icons";
+import { Image, Platform, TouchableOpacity } from "react-native";
+import android from "react-native";
 
 import HomeScreen from "../screens/HomeScreen";
 import CartScreen from "../screens/CartScreen";
@@ -25,9 +26,10 @@ const MenuStack = () => (
     <Stack.Screen name="MenuList" component={MenuScreen} />
     <Stack.Screen
       name="DishList"
+
       component={DishScreen}
       options={({ route }) => ({
-        headerShown: true,
+        headerShown: false,
         title: route.params?.category?.name || "Danh sách món",
         headerStyle: { backgroundColor: "#e91e63" },
         headerTintColor: "#fff",
@@ -142,8 +144,21 @@ const BottomTabNavigator = ({ navigation }) => {
     <Tab.Navigator
       initialRouteName="Home"
       screenOptions={{
-        tabBarActiveTintColor: "#e91e63",
+        tabBarActiveTintColor: "#E31837",
+        tabBarInactiveTintColor: "#757575",
         headerShown: false,
+        tabBarStyle: {
+          height: 91,
+          paddingTop: 14,
+        },
+        tabBarLabelStyle: {
+          fontSize: 13,
+          fontWeight: '500',
+          marginTop: 5,
+        },
+        tabBarButton: (props) => (
+          <TouchableOpacity {...props} activeOpacity={1} />
+        ),
       }}
     >
       <Tab.Screen
@@ -151,8 +166,16 @@ const BottomTabNavigator = ({ navigation }) => {
         component={HomeStack}
         options={{
           tabBarLabel: "Trang chủ",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="home" color={color} size={26} />
+          tabBarIcon: ({ focused }) => (
+            <Image
+              source={require('../../assets/img/home.png')}
+              style={{
+                width: 28,
+                height: 28,
+                tintColor: focused ? "#E31837" : "#757575"
+              }}
+              resizeMode="contain"
+            />
           ),
         }}
       />
@@ -161,8 +184,16 @@ const BottomTabNavigator = ({ navigation }) => {
         component={MenuStack}
         options={{
           tabBarLabel: "Thực đơn",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="menu" color={color} size={26} />
+          tabBarIcon: ({ focused }) => (
+            <Image
+              source={require('../../assets/img/Thucdon.png')}
+              style={{
+                width: 28,
+                height: 28,
+                tintColor: focused ? "#E31837" : "#757575"
+              }}
+              resizeMode="contain"
+            />
           ),
         }}
       />
@@ -170,9 +201,17 @@ const BottomTabNavigator = ({ navigation }) => {
         name="Cart"
         component={CartScreen}
         options={{
-          tabBarLabel: "Giỏ hàng",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="cart" color={color} size={26} />
+          tabBarLabel: "Đơn hàng",
+          tabBarIcon: ({ focused }) => (
+            <Image
+              source={require('../../assets/img/shopping-cart.png')}
+              style={{
+                width: 28,
+                height: 28,
+                tintColor: focused ? "#E31837" : "#757575"
+              }}
+              resizeMode="contain"
+            />
           ),
         }}
       />
@@ -181,8 +220,16 @@ const BottomTabNavigator = ({ navigation }) => {
         component={SettingStack}
         options={{
           tabBarLabel: "Cài đặt",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="settings" color={color} size={26} />
+          tabBarIcon: ({ focused }) => (
+            <Image
+              source={require('../../assets/img/setting.png')}
+              style={{
+                width: 28,
+                height: 28,
+                tintColor: focused ? "#E31837" : "#757575"
+              }}
+              resizeMode="contain"
+            />
           ),
         }}
       />
