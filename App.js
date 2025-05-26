@@ -12,7 +12,8 @@ import ManageDishesScreen from './src/screens/ManageDishScreen';
 import AddDishScreen from './src/screens/AddDishScreen';
 import EditDishScreen from './src/screens/EditDishScreen';
 import Toast from 'react-native-toast-message';
-
+import WelcomeScreen from './src/screens/WelcomeScreen';
+import RegisterScreen from './src/screens/RegisterScreen';
 const Stack = createStackNavigator();
 
 const App = () => {
@@ -23,7 +24,17 @@ const App = () => {
         <CartProvider>
           <NavigationContainer>
             <Stack.Navigator>
-              <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+              <Stack.Screen 
+              name="Welcome"
+              component={WelcomeScreen}
+              options={{ headerShown: false }}
+              />
+              <Stack.Screen name="Login" 
+              component={LoginScreen} 
+              options={{ headerShown: false }} />
+              <Stack.Screen name="Register" 
+              component={RegisterScreen} 
+              options={{ headerShown: false }} />
               <Stack.Screen
                 name="BottomTabNavigator"
                 component={BottomTabNavigator}
