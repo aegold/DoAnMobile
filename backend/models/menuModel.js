@@ -98,7 +98,7 @@ const getAllOrders = () => {
   return new Promise((resolve, reject) => {
     // Đầu tiên lấy danh sách đơn hàng
     db.all(`
-      SELECT o.*, u.name as user_name 
+      SELECT o.*, u.fullname as user_name 
       FROM Orders o
       LEFT JOIN Users u ON o.user_id = u.id
       ORDER BY o.created_at DESC
@@ -129,7 +129,10 @@ const getAllOrders = () => {
       // Lấy chi tiết cho từng đơn hàng
       orders.forEach(order => {
         db.all(
-          'SELECT name, quantity, price FROM OrderItems WHERE order_id = ?',
+          `SELECT oi.name, oi.quantity, oi.price, d.image 
+           FROM OrderItems oi
+           LEFT JOIN Dishes d ON oi.dish_id = d.id
+           WHERE oi.order_id = ?`,
           [order.id],
           (err, items) => {
             if (err) {

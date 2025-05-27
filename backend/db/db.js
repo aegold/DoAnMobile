@@ -22,7 +22,7 @@ function runSQL(sql, params = []) {
 
 async function setupDatabase() {
   try {
-    // Xóa bảng cũ để đảm bảo dữ liệu mới
+    // // Xóa bảng cũ để đảm bảo dữ liệu mới
     // await runSQL('DROP TABLE IF EXISTS Categories');
     // await runSQL('DROP TABLE IF EXISTS Dishes');
     // await runSQL('DROP TABLE IF EXISTS cart');
@@ -30,7 +30,7 @@ async function setupDatabase() {
     // await runSQL('DROP TABLE IF EXISTS OrderItems');
     // await runSQL('DROP TABLE IF EXISTS Users');
 
-    // Tạo bảng Categories
+    // // Tạo bảng Categories
     // await runSQL(`
     //   CREATE TABLE IF NOT EXISTS Categories (
     //     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -84,6 +84,9 @@ async function setupDatabase() {
     //     id INTEGER PRIMARY KEY AUTOINCREMENT,
     //     user_id INTEGER,
     //     total REAL NOT NULL,
+    //     address TEXT NOT NULL,
+    //     phone TEXT NOT NULL,
+    //     status TEXT NOT NULL DEFAULT 'Đang xử lý',  
     //     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     //     FOREIGN KEY (user_id) REFERENCES Users(id)
     //   )
@@ -147,11 +150,11 @@ async function setupDatabase() {
     // // Thêm dữ liệu mẫu vào Users với mật khẩu đã mã hóa
     // await runSQL(
     //   'INSERT INTO Users (username, password, fullname, email, phone, address, role) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    //   ['admin', adminPassword, 'Administrator', 'admin@gmail.com', '0909090909', 'Hà Nội', 'admin']
+    //   ['admin', adminPassword, 'Administrator', 'buithaibao2k4@gmail.com', '0909090909', 'Hà Nội', 'admin']
     // );
     // await runSQL(
     //   'INSERT INTO Users (username, password, fullname, email, phone, address, role) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    //   ['customer', customerPassword, 'Khách hàng', 'customer@gmail.com', '0904440436', 'Hà Nội', 'user']
+    //   ['customer', customerPassword, 'Khách hàng', 'baobambilnd@gmail.com', '0904440436', 'Hà Nội', 'user']
     // );
 
     console.log('Load database successfully!');

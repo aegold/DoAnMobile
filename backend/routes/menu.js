@@ -21,13 +21,18 @@ const checkAdmin = (req, res, next) => {
 
 // API đặt hàng
 router.post('/order', async (req, res) => {
-  const { userId, items, total } = req.body;
+  const { userId, items, total, address, phone } = req.body;
+  
   if (!items || items.length === 0) {
     return res.status(400).json({ error: 'Giỏ hàng trống' });
   }
 
+  if (!address || !phone) {
+    return res.status(400).json({ error: 'Địa chỉ và số điện thoại là bắt buộc' });
+  }
+
   try {
-    const orderId = await orderModel.createOrder(userId, total);
+    const orderId = await orderModel.createOrder(userId, total, address, phone, 'Đang xử lý');
     for (const item of items) {
       await orderModel.createOrderItem(orderId, item);
     }

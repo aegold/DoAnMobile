@@ -15,6 +15,7 @@ import Toast from 'react-native-toast-message';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
+import CheckoutScreen from './src/screens/CheckoutScreen';
 import { FontProvider } from './src/context/FontContext';
 const Stack = createStackNavigator();
 
@@ -60,6 +61,11 @@ const App = () => {
                   name="EditDish"
                   component={EditDishScreen}
                   options={{ title: 'Chỉnh sửa món ăn' }}
+                />
+                <Stack.Screen
+                  name="Checkout"
+                  component={CheckoutScreen}
+                  options={{ headerShown: false }}
                 />
               </Stack.Navigator>
             </NavigationContainer>

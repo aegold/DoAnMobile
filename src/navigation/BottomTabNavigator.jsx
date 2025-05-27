@@ -201,7 +201,7 @@ const BottomTabNavigator = ({ navigation }) => {
         name="Cart"
         component={CartScreen}
         options={{
-          tabBarLabel: "Đơn hàng",
+          tabBarLabel: "Giỏ hàng",
           tabBarIcon: ({ focused }) => (
             <Image
               source={require('../../assets/img/shopping-cart.png')}

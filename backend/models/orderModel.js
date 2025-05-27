@@ -1,11 +1,11 @@
 const db = require('../db/db');
 const bcrypt = require('bcrypt');
 
-const createOrder = (userId, total) => {
+const createOrder = (userId, total, address, phone, status) => {
   return new Promise((resolve, reject) => {
     db.run(
-      'INSERT INTO Orders (user_id, total) VALUES (?, ?)',
-      [userId, total],
+      'INSERT INTO Orders (user_id, total, address, phone ,status) VALUES (?, ?, ?, ?, ?)',
+      [userId, total, address, phone, status],
       function (err) {
         if (err) reject(err);
         else resolve(this.lastID);

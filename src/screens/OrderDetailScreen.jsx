@@ -17,8 +17,13 @@ const OrderDetailScreen = ({ route }) => {
   const renderOrderItem = ({ item }) => (
     <View style={styles.orderItem}>
       <Image
-        source={{ uri: `${BASE_URL}${item.image}` }}
+        source={
+          item.image
+            ? { uri: `${BASE_URL}${item.image}` }
+            : require("../../assets/img/default-food.png")
+        }
         style={styles.itemImage}
+        defaultSource={require("../../assets/img/default-food.png")}
       />
       <View style={styles.itemInfo}>
         <Text style={styles.itemName}>{item.name}</Text>
@@ -27,6 +32,8 @@ const OrderDetailScreen = ({ route }) => {
       </View>
     </View>
   );
+
+  console.log("Order items:", order.items); // Thêm log để debug
 
   return (
     <SafeAreaView style={styles.container}>
@@ -41,7 +48,7 @@ const OrderDetailScreen = ({ route }) => {
         </Text>
         <Text style={styles.infoText}>Khách hàng: {order.user_name}</Text>
         <Text style={styles.infoText}>
-          Trạng thái: {order.status === "pending" ? "Chờ xử lý" : "Đã xử lý"}
+          Trạng thái: {order.status === "Đang xử lý" ? "Chờ xử lý" : "Đã xử lý"}
         </Text>
         <Text style={styles.totalText}>
           Tổng tiền: {order.total.toLocaleString()} VNĐ
@@ -68,7 +75,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 15,
-    backgroundColor: "#e91e63",
+    backgroundColor: "#E60023",
   },
   title: {
     fontSize: 20,
@@ -90,7 +97,7 @@ const styles = StyleSheet.create({
   totalText: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#e91e63",
+    color: "#E60023",
     marginTop: 10,
   },
   sectionTitle: {
@@ -112,6 +119,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 10,
+    backgroundColor: '#f0f0f0', // Thêm màu nền cho trường hợp ảnh đang tải
   },
   itemInfo: {
     flex: 1,
@@ -130,7 +138,7 @@ const styles = StyleSheet.create({
   },
   itemPrice: {
     fontSize: 14,
-    color: "#e91e63",
+    color: "#E60023",
     marginTop: 5,
   },
   emptyText: {

@@ -20,51 +20,18 @@ import { useFonts } from 'expo-font';
 const { width, height } = Dimensions.get('window');
 
 const CartScreen = ({ navigation }) => {
-  const { cart, updateQuantity, removeFromCart, getTotalPrice, clearCart } =
-    useCart();
+  const { cart, updateQuantity, removeFromCart, getTotalPrice } = useCart();
 
   const [fontsLoaded] = useFonts({
     Sen_700Bold,
   });
 
-  const handlePlaceOrder = async () => {
+  const handleCheckout = () => {
     if (cart.length === 0) {
       Alert.alert("Thông báo", "Giỏ hàng trống, vui lòng thêm món ăn!");
       return;
     }
-
-    try {
-      const orderData = {
-        items: cart.map((item) => ({
-          id: item.id,
-          quantity: item.quantity,
-          name: item.name,
-          price: item.price,
-        })),
-        total: getTotalPrice(),
-      };
-
-      console.log("Placing order:", orderData);
-      const response = await fetch(API_ENDPOINTS.ORDER, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(orderData),
-      });
-      const result = await response.json();
-      console.log("Order result:", result);
-
-      if (response.ok) {
-        Alert.alert("Thành công", "Đặt hàng thành công!");
-        clearCart();
-      } else {
-        Alert.alert("Lỗi", result.error || "Đặt hàng thất bại");
-      }
-    } catch (err) {
-      console.error("Error placing order:", err);
-      Alert.alert("Lỗi", "Không thể đặt hàng, vui lòng thử lại!");
-    }
+    navigation.navigate("Checkout");
   };
 
   const renderCartItem = ({ item }) => (
@@ -74,29 +41,36 @@ const CartScreen = ({ navigation }) => {
         style={styles.cartImage}
       />
       <View style={styles.cartInfo}>
-        <Text style={styles.cartName}>{item.name}</Text>
-        <Text style={styles.cartPrice}>{item.price.toLocaleString()} VND</Text>
-        <View style={styles.quantityContainer}>
+        <View style={styles.cartHeader}>
+          <View style={styles.cartTitleContainer}>
+            <Text style={styles.cartName}>{item.name}</Text>
+            <Text style={styles.cartCategory}>Pizza</Text>
+          </View>
           <TouchableOpacity
-            style={styles.quantityButton}
-            onPress={() => updateQuantity(item.id, -1)}
+            style={styles.removeButton}
+            onPress={() => removeFromCart(item.id)}
           >
-            <Text style={styles.quantityButtonText}>-</Text>
-          </TouchableOpacity>
-          <Text style={styles.cartQuantity}>{item.quantity}</Text>
-          <TouchableOpacity
-            style={styles.quantityButton}
-            onPress={() => updateQuantity(item.id, 1)}
-          >
-            <Text style={styles.quantityButtonText}>+</Text>
+            <Ionicons name="trash-outline" size={24} color="#E60023" />
           </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          style={styles.removeButton}
-          onPress={() => removeFromCart(item.id)}
-        >
-          <Text style={styles.removeButtonText}>Xóa</Text>
-        </TouchableOpacity>
+        <View style={styles.cartFooter}>
+          <Text style={styles.cartPrice}>{item.price.toLocaleString()} VND</Text>
+          <View style={styles.quantityContainer}>
+            <TouchableOpacity
+              style={styles.quantityButton}
+              onPress={() => updateQuantity(item.id, -1)}
+            >
+              <Ionicons name="remove" size={20} color="#E60023" />
+            </TouchableOpacity>
+            <Text style={styles.cartQuantity}>{item.quantity}</Text>
+            <TouchableOpacity
+              style={styles.quantityButton}
+              onPress={() => updateQuantity(item.id, 1)}
+            >
+              <Ionicons name="add" size={20} color="#E60023" />
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
     </View>
   );
@@ -161,6 +135,7 @@ const CartScreen = ({ navigation }) => {
             data={cart}
             renderItem={renderCartItem}
             keyExtractor={(item) => item.id.toString()}
+            contentContainerStyle={styles.cartList}
           />
           <View style={styles.orderContainer}>
             <Text style={styles.totalText}>
@@ -168,7 +143,7 @@ const CartScreen = ({ navigation }) => {
             </Text>
             <TouchableOpacity
               style={styles.orderButton}
-              onPress={handlePlaceOrder}
+              onPress={handleCheckout}
             >
               <Text style={styles.orderButtonText}>Đặt hàng</Text>
             </TouchableOpacity>
@@ -182,16 +157,16 @@ const CartScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#fff",
   },
   redBackground: {
-    backgroundColor: "#FF0000",
-    height: height * 0.25,
+    backgroundColor: "#E60023",
+    height: height * 0.45,
     width: '100%',
     position: 'absolute',
     top: 0,
-    borderBottomStartRadius:50,
-    borderBottomEndRadius:100,
+    borderBottomStartRadius: 60,
+    borderBottomEndRadius: 60,
   },
   header: {
     flexDirection: "row",
@@ -199,6 +174,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 12,
+    backgroundColor: "#fff",
   },
   backButton: {
     width: 40,
@@ -209,13 +185,114 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontFamily: 'Sen_700Bold',
+    color: "#000",
+  },
+  cartList: {
+    padding: 16,
+  },
+  cartItem: {
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    marginBottom: 16,
+    padding: 12,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cartImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 12,
+  },
+  cartInfo: {
+    flex: 1,
+    marginLeft: 12,
+    justifyContent: "space-between",
+  },
+  cartHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  cartTitleContainer: {
+    flex: 1,
+  },
+  cartName: {
+    fontSize: 18,
+    fontFamily: 'Sen_700Bold',
+    color: "#000",
+    marginBottom: 4,
+  },
+  cartCategory: {
+    fontSize: 14,
+    color: "#666",
+    fontFamily: 'Sen_700Bold',
+  },
+  cartFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 8,
+  },
+  cartPrice: {
+    fontSize: 16,
+    color: "#E60023",
+    fontFamily: 'Sen_700Bold',
+  },
+  quantityContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F5F5F5",
+    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  quantityButton: {
+    padding: 4,
+  },
+  cartQuantity: {
+    fontSize: 16,
+    color: "#000",
+    marginHorizontal: 12,
+    fontFamily: 'Sen_700Bold',
+    minWidth: 24,
+    textAlign: 'center',
+  },
+  orderContainer: {
+    padding: 16,
+    backgroundColor: "#fff",
+    borderTopWidth: 1,
+    borderTopColor: "#f0f0f0",
+  },
+  totalText: {
+    fontSize: 18,
+    fontFamily: 'Sen_700Bold',
+    color: "#E60023",
+    marginBottom: 12,
+  },
+  orderButton: {
+    backgroundColor: "#E60023",
+    padding: 16,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  orderButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontFamily: 'Sen_700Bold',
   },
   emptyContainer: {
     flex: 1,
   },
   emptyContentCard: {
     backgroundColor: 'white',
-    marginHorizontal: 20,
+    marginHorizontal: 40,
     marginTop: height * 0.15,
     borderRadius: 16,
     padding: 20,
@@ -246,7 +323,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   startOrderButton: {
-    backgroundColor: "#FF0000",
+    backgroundColor: "#E60023",
     marginHorizontal: 20,
     marginTop: 20,
     paddingVertical: 16,
@@ -254,100 +331,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   startOrderButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontFamily: 'Sen_700Bold',
-  },
-  cartItem: {
-    flexDirection: "row",
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    marginHorizontal: 16,
-    marginVertical: 8,
-    padding: 12,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  cartImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 12,
-  },
-  cartInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  cartName: {
-    fontSize: 16,
-    fontFamily: 'Sen_700Bold',
-    color: "#000",
-  },
-  cartPrice: {
-    fontSize: 14,
-    color: "#FF0000",
-    fontFamily: 'Sen_700Bold',
-    marginTop: 4,
-  },
-  cartQuantity: {
-    fontSize: 16,
-    color: "#000",
-    marginHorizontal: 16,
-    fontFamily: 'Sen_700Bold',
-  },
-  quantityContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 8,
-  },
-  quantityButton: {
-    backgroundColor: "#FF0000",
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  quantityButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontFamily: 'Sen_700Bold',
-  },
-  removeButton: {
-    backgroundColor: "#FF0000",
-    padding: 8,
-    borderRadius: 8,
-    marginTop: 8,
-    alignItems: "center",
-  },
-  removeButtonText: {
-    color: "#fff",
-    fontFamily: 'Sen_700Bold',
-  },
-  orderContainer: {
-    padding: 16,
-    backgroundColor: "#fff",
-    borderTopWidth: 1,
-    borderTopColor: "#f0f0f0",
-  },
-  totalText: {
-    fontSize: 18,
-    fontFamily: 'Sen_700Bold',
-    color: "#FF0000",
-    marginBottom: 12,
-  },
-  orderButton: {
-    backgroundColor: "#FF0000",
-    padding: 16,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  orderButtonText: {
     color: "#fff",
     fontSize: 16,
     fontFamily: 'Sen_700Bold',

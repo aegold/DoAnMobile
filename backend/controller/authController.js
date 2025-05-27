@@ -64,7 +64,16 @@ const loginUser = async (req, res) => {
         { expiresIn: "24h" }
       );
       
-      const response = { ...user, token };
+      const response = { 
+        id: user.id,
+        username: user.username,
+        fullname: user.fullname,
+        role: user.role,
+        address: user.address,
+        phone: user.phone,
+        token 
+      };
+      
       console.log("Đã tạo token thành công");
       res.json(response);
     } catch (error) {
