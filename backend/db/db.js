@@ -70,10 +70,12 @@ async function setupDatabase() {
     //     username TEXT UNIQUE NOT NULL,
     //     password TEXT NOT NULL,
     //     fullname TEXT NOT NULL,
-    //     email TEXT NOT NULL UNIQUE,
-    //     phone TEXT NOT NULL UNIQUE,
+    //     email TEXT UNIQUE NOT NULL,
+    //     phone TEXT UNIQUE NOT NULL,
     //     address TEXT NOT NULL,
-    //     role TEXT DEFAULT 'user'
+    //     role TEXT DEFAULT 'user',
+    //     resetOTP TEXT,
+    //     resetOTPExpiry INTEGER
     //   )
     // `);
     // // // Tạo bảng Orders
@@ -139,7 +141,7 @@ async function setupDatabase() {
     //   'INSERT INTO Dishes (category_id, name, description, price, image) VALUES (?, ?, ?, ?, ?)',
     //   [ 3, 'Combo gia đình ', '6 miếng gà', 180000, '/public/images/cha_gio.jpg']
     // );
-    // Mã hóa mật khẩu cho admin và customer
+    // // Mã hóa mật khẩu cho admin và customer
     // const adminPassword = await bcrypt.hash('admin123', 10);
     // const customerPassword = await bcrypt.hash('customer123', 10);
     // // Thêm dữ liệu mẫu vào Users với mật khẩu đã mã hóa

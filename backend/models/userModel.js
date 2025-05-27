@@ -1,6 +1,9 @@
 const db = require('../db/db');
 const bcrypt = require('bcrypt');
 
+// Thời gian hết hạn của OTP (5 phút)
+const OTP_EXPIRY = 300000;
+
 const register = (username, password, fullname, email, phone, address, role = "user") => {
   return new Promise((resolve, reject) => {
     // Kiểm tra username, email và số điện thoại đã tồn tại chưa
@@ -100,7 +103,119 @@ const login = (username, password) => {
   });
 };
 
+// Tạo mã OTP cho quên mật khẩu
+const generateResetOTP = (email) => {
+  return new Promise((resolve, reject) => {
+    // Kiểm tra email tồn tại
+    db.get("SELECT id FROM Users WHERE email = ?", [email], (err, user) => {
+      if (err) {
+        console.error("Error checking email:", err);
+        reject(err);
+        return;
+      }
+
+      if (!user) {
+        reject(new Error("Email không tồn tại trong hệ thống"));
+        return;
+      }
+
+      // Tạo mã OTP 6 số
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otpExpiry = Date.now() + OTP_EXPIRY;
+
+      // Lưu OTP và thời gian hết hạn vào database
+      db.run(
+        "UPDATE Users SET resetOTP = ?, resetOTPExpiry = ? WHERE email = ?",
+        [otp, otpExpiry, email],
+        (err) => {
+          if (err) {
+            console.error("Error saving OTP:", err);
+            reject(err);
+            return;
+          }
+          resolve(otp);
+        }
+      );
+    });
+  });
+};
+
+// Xác thực mã OTP
+const verifyResetOTP = (email, otp) => {
+  return new Promise((resolve, reject) => {
+    db.get(
+      "SELECT id FROM Users WHERE email = ? AND resetOTP = ? AND resetOTPExpiry > ?",
+      [email, otp, Date.now()],
+      (err, user) => {
+        if (err) {
+          console.error("Error verifying OTP:", err);
+          reject(err);
+          return;
+        }
+
+        if (!user) {
+          reject(new Error("Mã OTP không hợp lệ hoặc đã hết hạn"));
+          return;
+        }
+
+        resolve(true);
+      }
+    );
+  });
+};
+
+// Reset mật khẩu sau khi xác thực OTP
+const resetPassword = (email, otp, newPassword) => {
+  return new Promise((resolve, reject) => {
+    // Xác thực OTP trước
+    verifyResetOTP(email, otp)
+      .then(() => {
+        // Mã hóa mật khẩu mới
+        bcrypt.hash(newPassword, 10, (err, hashedPassword) => {
+          if (err) {
+            console.error("Error hashing new password:", err);
+            reject(err);
+            return;
+          }
+
+          // Cập nhật mật khẩu và xóa OTP
+          db.run(
+            "UPDATE Users SET password = ?, resetOTP = NULL, resetOTPExpiry = NULL WHERE email = ? AND resetOTP = ?",
+            [hashedPassword, email, otp],
+            (err) => {
+              if (err) {
+                console.error("Error updating password:", err);
+                reject(err);
+                return;
+              }
+              resolve({ message: "Mật khẩu đã được cập nhật thành công" });
+            }
+          );
+        });
+      })
+      .catch(reject);
+  });
+};
+
+// Kiểm tra email tồn tại
+const checkEmailExists = (email) => {
+  return new Promise((resolve, reject) => {
+    db.get("SELECT email FROM Users WHERE email = ?", [email], (err, user) => {
+      if (err) {
+        console.error("Error checking email:", err);
+        reject(err);
+        return;
+      }
+      resolve(!!user);
+    });
+  });
+};
+
 module.exports = {
   register,
-  login
+  login,
+  generateResetOTP,
+  verifyResetOTP,
+  resetPassword,
+  checkEmailExists
 }; 

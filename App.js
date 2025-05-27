@@ -14,6 +14,7 @@ import EditDishScreen from './src/screens/EditDishScreen';
 import Toast from 'react-native-toast-message';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
+import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
 import { FontProvider } from './src/context/FontContext';
 const Stack = createStackNavigator();
 
@@ -36,6 +37,9 @@ const App = () => {
                 options={{ headerShown: false }} />
                 <Stack.Screen name="Register" 
                 component={RegisterScreen} 
+                options={{ headerShown: false }} />
+                <Stack.Screen name="ForgotPassword"
+                component={ForgotPasswordScreen}
                 options={{ headerShown: false }} />
                 <Stack.Screen
                   name="BottomTabNavigator"
