@@ -17,6 +17,7 @@ import AddDishScreen from "../screens/AddDishScreen";
 import EditDishScreen from "../screens/EditDishScreen";
 import OrderListScreen from "../screens/OrderListScreen";
 import OrderDetailScreen from "../screens/OrderDetailScreen";
+import FoodDetailScreen from '../screens/FoodDetailScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -26,7 +27,6 @@ const MenuStack = () => (
     <Stack.Screen name="MenuList" component={MenuScreen} />
     <Stack.Screen
       name="DishList"
-
       component={DishScreen}
       options={({ route }) => ({
         headerShown: false,
@@ -36,7 +36,12 @@ const MenuStack = () => (
         headerTitleStyle: { fontWeight: "bold" },
       })}
     />
-  </Stack.Navigator>
+    <Stack.Screen
+        name="FoodDetail"
+        component={FoodDetailScreen}
+        options={{ headerShown: false }}
+    />
+      </Stack.Navigator>
 );
 
 const HomeStack = () => (

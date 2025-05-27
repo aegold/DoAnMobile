@@ -16,6 +16,7 @@ import WelcomeScreen from './src/screens/WelcomeScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
 import CheckoutScreen from './src/screens/CheckoutScreen';
+import FoodDetailScreen from './src/screens/FoodDetailScreen';
 import { FontProvider } from './src/context/FontContext';
 const Stack = createStackNavigator();
 
@@ -65,6 +66,11 @@ const App = () => {
                 <Stack.Screen
                   name="Checkout"
                   component={CheckoutScreen}
+                  options={{ headerShown: false }}
+                />
+               <Stack.Screen
+                  name="FoodDetail"
+                  component={FoodDetailScreen}
                   options={{ headerShown: false }}
                 />
               </Stack.Navigator>

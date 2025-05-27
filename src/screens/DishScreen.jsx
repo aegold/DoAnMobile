@@ -98,6 +98,8 @@ const DishScreen = ({ route, navigation }) => {
   };
 
   const renderDishItem = ({ item, index }) => (
+    <TouchableOpacity
+    onPress={() => navigation.navigate("FoodDetail", { dish: item })}>
     <View style={[
       styles.dishItem,
       index % 2 === 0 ? { marginRight: 8 } : { marginLeft: 8 }
@@ -122,6 +124,7 @@ const DishScreen = ({ route, navigation }) => {
         </View>
       </View>
     </View>
+    </TouchableOpacity>
   );
 
   if (!fontsLoaded) {
