@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   },
   emptyContentCard: {
     backgroundColor: 'white',
-    marginHorizontal: 40,
+    marginHorizontal: 60,
     marginTop: height * 0.15,
     borderRadius: 16,
     padding: 20,
@@ -307,8 +307,8 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   emptyImageContainer: {
-    width: width * 0.6,
-    height: width * 0.6,
+    width: width ,
+    height: width ,
     justifyContent: 'center',
     alignItems: 'center',
   },

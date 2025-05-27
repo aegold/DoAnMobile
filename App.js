@@ -16,6 +16,9 @@ import WelcomeScreen from './src/screens/WelcomeScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
 import CheckoutScreen from './src/screens/CheckoutScreen';
+import OrderHistoryScreen from './src/screens/OrderHistoryScreen';
+import UserOrderDetailScreen from './src/screens/UserOrderDetailScreen';
+import AdminOrderDetailScreen from './src/screens/AdminOrderDetailScreen';
 import { FontProvider } from './src/context/FontContext';
 const Stack = createStackNavigator();
 
@@ -65,6 +68,21 @@ const App = () => {
                 <Stack.Screen
                   name="Checkout"
                   component={CheckoutScreen}
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="OrderHistory"
+                  component={OrderHistoryScreen}
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="UserOrderDetail"
+                  component={UserOrderDetailScreen}
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="AdminOrderDetail"
+                  component={AdminOrderDetailScreen}
                   options={{ headerShown: false }}
                 />
               </Stack.Navigator>

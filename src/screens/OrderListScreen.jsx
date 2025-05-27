@@ -6,21 +6,23 @@ import {
   FlatList,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { API_ENDPOINTS } from "../constants/api";
+import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const OrderListScreen = ({ navigation }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedStatus, setSelectedStatus] = useState('Đang xử lý');
   const { fetchWithAuth } = useAuth();
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      console.log("Đang lấy danh sách đơn hàng...");
       const response = await fetchWithAuth(API_ENDPOINTS.ORDERS);
-      console.log("Response status:", response.status);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -28,7 +30,6 @@ const OrderListScreen = ({ navigation }) => {
       }
 
       const data = await response.json();
-      console.log("Dữ liệu đơn hàng:", data);
       setOrders(data);
     } catch (error) {
       console.error("Lỗi khi lấy đơn hàng:", error);
@@ -42,112 +43,225 @@ const OrderListScreen = ({ navigation }) => {
     fetchOrders();
   }, []);
 
-  const handleViewOrderDetail = (order) => {
-    navigation.navigate("OrderDetail", { order });
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Đang xử lý':
+        return '#FF9800';
+      case 'Đã xác nhận':
+        return '#4CAF50';
+      case 'Đã hủy':
+        return '#E60023';
+      default:
+        return '#666';
+    }
   };
+
+  const filteredOrders = orders.filter(order => order.status === selectedStatus);
 
   const renderOrderItem = ({ item }) => (
     <TouchableOpacity
       style={styles.orderItem}
-      onPress={() => handleViewOrderDetail(item)}
+      onPress={() => navigation.navigate("AdminOrderDetail", { order: item })}
     >
-      <Text style={styles.orderId}>Đơn hàng #{item.id}</Text>
-      <Text style={styles.orderDate}>
-        Ngày đặt: {new Date(item.created_at).toLocaleDateString()}
-      </Text>
-      <Text style={styles.orderTotal}>
-        Tổng tiền: {item.total.toLocaleString()} VNĐ
-      </Text>
-      <Text style={styles.orderStatus}>
-        Trạng thái: {item.status === "Đang xử lý" ? "Chờ xử lý" : "Đã xử lý"}
-      </Text>
-      <Text style={styles.viewDetail}>Nhấn để xem chi tiết</Text>
+      <View style={styles.orderHeader}>
+        <Text style={styles.orderId}>Đơn hàng #{item.id}</Text>
+        <Text style={[styles.orderStatus, { color: getStatusColor(item.status) }]}>
+          {item.status}
+        </Text>
+      </View>
+
+      <View style={styles.orderInfo}>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Ngày đặt:</Text>
+          <Text style={styles.value}>
+            {new Date(item.created_at).toLocaleDateString('vi-VN')}
+          </Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Khách hàng:</Text>
+          <Text style={styles.value}>{item.user_name}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Tổng tiền:</Text>
+          <Text style={styles.value}>{item.total.toLocaleString()} VNĐ</Text>
+        </View>
+      </View>
+
+      <View style={styles.viewDetailButton}>
+        <Text style={styles.viewDetailText}>Xem chi tiết</Text>
+        <Ionicons name="chevron-forward" size={20} color="#E60023" />
+      </View>
     </TouchableOpacity>
   );
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <Text>Đang tải...</Text>
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#E60023" />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Danh sách đơn hàng</Text>
-      {orders.length === 0 ? (
-        <Text style={styles.emptyText}>Chưa có đơn hàng nào</Text>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Quản lý đơn hàng</Text>
+      </View>
+
+      <View style={styles.statusTabs}>
+        {['Đang xử lý', 'Đã xác nhận', 'Đã hủy'].map((status) => (
+          <TouchableOpacity
+            key={status}
+            style={[
+              styles.statusTab,
+              selectedStatus === status && styles.selectedTab
+            ]}
+            onPress={() => setSelectedStatus(status)}
+          >
+            <Text style={[
+              styles.statusTabText,
+              selectedStatus === status && styles.selectedTabText
+            ]}>
+              {status}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {filteredOrders.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="receipt-outline" size={64} color="#ccc" />
+          <Text style={styles.emptyText}>
+            Không có đơn hàng nào ở trạng thái {selectedStatus.toLowerCase()}
+          </Text>
+        </View>
       ) : (
         <FlatList
-          data={orders}
+          data={filteredOrders}
           renderItem={renderOrderItem}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.listContainer}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: "#f5f5f5",
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  header: {
+    padding: 16,
+    backgroundColor: '#E60023',
+    elevation: 4,
+  },
   title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-    color: "#333",
+    fontSize: 20,
+    fontFamily: 'Sen_700Bold',
+    color: '#fff',
+    textAlign: 'center',
+  },
+  statusTabs: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    padding: 8,
+    elevation: 2,
+  },
+  statusTab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 8,
+    marginHorizontal: 4,
+  },
+  selectedTab: {
+    backgroundColor: '#E60023',
+  },
+  statusTabText: {
+    fontFamily: 'Sen_400Regular',
+    fontSize: 14,
+    color: '#666',
+  },
+  selectedTabText: {
+    color: '#fff',
+    fontFamily: 'Sen_700Bold',
   },
   listContainer: {
-    paddingBottom: 20,
+    padding: 16,
   },
   orderItem: {
     backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
     elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+  },
+  orderHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   orderId: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 5,
-  },
-  orderDate: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 5,
-  },
-  orderTotal: {
     fontSize: 16,
-    color: "#e91e63",
-    fontWeight: "bold",
-    marginBottom: 5,
+    fontFamily: 'Sen_700Bold',
+    color: "#000",
   },
   orderStatus: {
     fontSize: 14,
-    color: "#666",
-    marginBottom: 5,
+    fontFamily: 'Sen_700Bold',
   },
-  viewDetail: {
+  orderInfo: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    paddingBottom: 12,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  label: {
     fontSize: 14,
-    color: "#e91e63",
-    fontStyle: "italic",
+    color: '#666',
+    fontFamily: 'Sen_400Regular',
+  },
+  value: {
+    fontSize: 14,
+    color: '#000',
+    fontFamily: 'Sen_700Bold',
+  },
+  viewDetailButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginTop: 12,
+  },
+  viewDetailText: {
+    fontSize: 14,
+    color: '#E60023',
+    fontFamily: 'Sen_700Bold',
+    marginRight: 4,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
   },
   emptyText: {
-    textAlign: "center",
+    marginTop: 16,
     fontSize: 16,
-    color: "#666",
-    marginTop: 20,
+    color: '#666',
+    fontFamily: 'Sen_400Regular',
+    textAlign: 'center',
   },
 });
 

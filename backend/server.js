@@ -7,6 +7,7 @@ const categoriesRoutes = require('./routes/categoriesRoutes');
 const dishesRoutes = require('./routes/dishesRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const manageRoutes = require('./routes/manageRoutes');
+const orderRoutes = require('./routes/orderRoutes');
 
 const db = require('./db/db');
 const upload = require('./middlewares/upload');
@@ -70,6 +71,7 @@ app.use('/api', categoriesRoutes);
 app.use('/api', cartRoutes);
 app.use('/api', manageRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/orders/', orderRoutes);
 
 
 

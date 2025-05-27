@@ -72,7 +72,10 @@ const HomeScreen = ({ navigation }) => {
             style={styles.logo}
             resizeMode="contain"
           />
-          <TouchableOpacity style={styles.cartButton}>
+          <TouchableOpacity 
+            style={styles.cartButton}
+            onPress={() => navigation.navigate('OrderHistory')}
+          >
             <Ionicons name="cart-outline" size={24} color="#fff" />
           </TouchableOpacity>
         </View>

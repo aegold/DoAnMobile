@@ -62,7 +62,15 @@ const checkRole = (roles) => {
   };
 };
 
+const isAdmin = (req, res, next) => {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Không có quyền truy cập. Chỉ admin mới có thể thực hiện thao tác này.' });
+  }
+  next();
+};
+
 module.exports = {
   authenticateToken,
-  checkRole
+  checkRole,
+  isAdmin
 };

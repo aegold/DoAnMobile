@@ -6,13 +6,58 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { BASE_URL } from '../constants/api';
+import { BASE_URL, API_ENDPOINTS } from '../constants/api';
+import { useAuth } from '../context/AuthContext';
 
-const OrderDetailScreen = ({ navigation, route }) => {
+const UserOrderDetailScreen = ({ navigation, route }) => {
   const { order } = route.params;
+  const { fetchWithAuth } = useAuth();
+
+  const handleCancelOrder = async () => {
+    Alert.alert(
+      'Xác nhận hủy đơn',
+      'Bạn có chắc chắn muốn hủy đơn hàng này không?',
+      [
+        {
+          text: 'Không',
+          style: 'cancel',
+        },
+        {
+          text: 'Có',
+          onPress: async () => {
+            try {
+              const response = await fetchWithAuth(API_ENDPOINTS.CANCEL_ORDER(order.id), {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+              });
+
+              const data = await response.json();
+              
+              if (response.ok) {
+                Alert.alert('Thành công', data.message, [
+                  {
+                    text: 'OK',
+                    onPress: () => navigation.goBack(),
+                  },
+                ]);
+              } else {
+                Alert.alert('Lỗi', data.error || 'Không thể hủy đơn hàng');
+              }
+            } catch (error) {
+              console.error('Error canceling order:', error);
+              Alert.alert('Lỗi', 'Có lỗi xảy ra khi hủy đơn hàng');
+            }
+          },
+        },
+      ],
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -48,6 +93,14 @@ const OrderDetailScreen = ({ navigation, route }) => {
               {order.status}
             </Text>
           </View>
+          {order.status === 'Đang xử lý' && (
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={handleCancelOrder}
+            >
+              <Text style={styles.cancelButtonText}>Hủy đơn hàng</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.deliveryInfo}>
@@ -140,6 +193,18 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     elevation: 2,
+  },
+  cancelButton: {
+    backgroundColor: '#E60023',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  cancelButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: 'Sen_700Bold',
   },
   deliveryInfo: {
     backgroundColor: '#fff',
@@ -237,4 +302,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default OrderDetailScreen;
+export default UserOrderDetailScreen; 

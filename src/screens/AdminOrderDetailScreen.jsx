@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,13 +6,66 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { BASE_URL } from '../constants/api';
+import { BASE_URL, API_ENDPOINTS } from '../constants/api';
+import { useAuth } from '../context/AuthContext';
 
-const OrderDetailScreen = ({ navigation, route }) => {
+const AdminOrderDetailScreen = ({ navigation, route }) => {
   const { order } = route.params;
+  const { fetchWithAuth } = useAuth();
+  const [currentStatus, setCurrentStatus] = useState(order.status);
+
+  const handleUpdateStatus = async (newStatus) => {
+    Alert.alert(
+      'Xác nhận',
+      `Bạn có chắc chắn muốn ${newStatus === 'Đã hủy' ? 'hủy' : 'xác nhận'} đơn hàng này?`,
+      [
+        {
+          text: 'Không',
+          style: 'cancel',
+        },
+        {
+          text: 'Có',
+          onPress: async () => {
+            try {
+              console.log('Calling API:', API_ENDPOINTS.UPDATE_ORDER_STATUS(order.id));
+              const response = await fetchWithAuth(API_ENDPOINTS.UPDATE_ORDER_STATUS(order.id), {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ status: newStatus }),
+              });
+
+              if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Không thể cập nhật trạng thái đơn hàng');
+              }
+
+              const data = await response.json();
+              setCurrentStatus(newStatus);
+              Alert.alert(
+                'Thành công', 
+                `Đã ${newStatus === 'Đã hủy' ? 'hủy' : 'xác nhận'} đơn hàng thành công`,
+                [
+                  {
+                    text: 'OK',
+                    onPress: () => navigation.goBack(),
+                  },
+                ]
+              );
+            } catch (error) {
+              console.error('Error updating order status:', error);
+              Alert.alert('Lỗi', error.message || 'Có lỗi xảy ra khi cập nhật trạng thái');
+            }
+          },
+        },
+      ],
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -23,7 +76,7 @@ const OrderDetailScreen = ({ navigation, route }) => {
         >
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.title}>Chi tiết đơn hàng</Text>
+        <Text style={styles.title}>Quản lý đơn hàng</Text>
         <View style={styles.rightHeader} />
       </View>
 
@@ -43,11 +96,34 @@ const OrderDetailScreen = ({ navigation, route }) => {
             <Text style={styles.label}>Trạng thái:</Text>
             <Text style={[
               styles.statusText,
-              { color: order.status === 'Đang xử lý' ? '#E60023' : '#4CAF50' }
+              { 
+                color: currentStatus === 'Đã hủy' ? '#E60023' : 
+                      currentStatus === 'Đã xác nhận' ? '#4CAF50' : '#FF9800'
+              }
             ]}>
-              {order.status}
+              {currentStatus}
             </Text>
           </View>
+          
+          {currentStatus === 'Đang xử lý' && (
+            <View style={styles.actionButtons}>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.confirmButton]}
+                onPress={() => handleUpdateStatus('Đã xác nhận')}
+              >
+                <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                <Text style={styles.actionButtonText}>Xác nhận đơn</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.actionButton, styles.cancelButton]}
+                onPress={() => handleUpdateStatus('Đã hủy')}
+              >
+                <Ionicons name="close-circle" size={20} color="#fff" />
+                <Text style={styles.actionButtonText}>Hủy đơn</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         <View style={styles.deliveryInfo}>
@@ -141,6 +217,36 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     elevation: 2,
   },
+  actionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
+    gap: 12,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 8,
+  },
+  confirmButton: {
+    backgroundColor: '#4CAF50',
+  },
+  cancelButton: {
+    backgroundColor: '#E60023',
+  },
+  actionButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontFamily: 'Sen_700Bold',
+  },
+  statusText: {
+    fontSize: 14,
+    fontFamily: 'Sen_700Bold',
+  },
   deliveryInfo: {
     backgroundColor: '#fff',
     borderRadius: 12,
@@ -168,10 +274,6 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 14,
     color: '#000',
-    fontFamily: 'Sen_700Bold',
-  },
-  statusText: {
-    fontSize: 14,
     fontFamily: 'Sen_700Bold',
   },
   itemsContainer: {
@@ -237,4 +339,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default OrderDetailScreen;
+export default AdminOrderDetailScreen; 

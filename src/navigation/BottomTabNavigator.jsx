@@ -17,6 +17,7 @@ import AddDishScreen from "../screens/AddDishScreen";
 import EditDishScreen from "../screens/EditDishScreen";
 import OrderListScreen from "../screens/OrderListScreen";
 import OrderDetailScreen from "../screens/OrderDetailScreen";
+import AdminOrderDetailScreen from "../screens/AdminOrderDetailScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -127,7 +128,7 @@ const SettingStack = () => (
     />
     <Stack.Screen
       name="OrderDetail"
-      component={OrderDetailScreen}
+      component={AdminOrderDetailScreen}
       options={{
         headerShown: true,
         title: "Chi tiết đơn hàng",
