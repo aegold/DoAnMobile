@@ -6,8 +6,8 @@ const jwt = require("jsonwebtoken");
 const registerUser = async (req, res) => {
     try {
       console.log("Đang xử lý đăng ký:", req.body);
-      const { username, password, name } = req.body;
-      const user = await register(username, password, name);
+      const { username, password, fullname,email,phone, address} = req.body;
+      const user = await register(username, password, fullname,email, phone, address);
       console.log("Đăng ký thành công:", user);
       res.json(user);
     } catch (error) {

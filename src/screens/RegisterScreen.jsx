@@ -5,11 +5,13 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   SafeAreaView,
+  ScrollView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from '@expo/vector-icons';
+import { API_ENDPOINTS } from '../constants/api';
+import CustomAlert from '../components/customAlert';
 
 const RegisterScreen = () => {
   const [fullName, setFullName] = useState("");
@@ -17,38 +19,151 @@ const RegisterScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
   
   const navigation = useNavigation();
 
+  const showAlert = (title, message, onConfirm) => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      onConfirm: () => {
+        setAlertConfig(prev => ({ ...prev, visible: false }));
+        if (onConfirm) onConfirm();
+      },
+    });
+  };
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handlePhoneChange = (text) => {
+    // Chỉ cho phép nhập số
+    const numericValue = text.replace(/[^0-9]/g, '');
+    setPhone(numericValue);
+  };
+
   const handleRegister = async () => {
-    if (!fullName || !email || !password || !confirmPassword) {
-      Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin");
-      return;
-    }
-    if (!username) {
-      Alert.alert("Lỗi", "Vui lòng nhập tên đăng nhập");
+    // Kiểm tra các trường bắt buộc
+    if (!fullName || !email || !password || !confirmPassword || !phone || !address) {
+      showAlert(
+        "Lỗi",
+        "Vui lòng điền đầy đủ thông tin",
+        null
+      );
       return;
     }
 
+    // Kiểm tra username
+    if (!username) {
+      showAlert(
+        "Lỗi",
+        "Vui lòng nhập tên đăng nhập",
+        null
+      );
+      return;
+    }
+
+    // Kiểm tra định dạng email
+    if (!validateEmail(email)) {
+      showAlert(
+        "Lỗi",
+        "Email không hợp lệ",
+        null
+      );
+      return;
+    }
+
+    // Kiểm tra độ dài mật khẩu
+    if (password.length < 6) {
+      showAlert(
+        "Lỗi",
+        "Mật khẩu phải có ít nhất 6 ký tự",
+        null
+      );
+      return;
+    }
+
+    // Kiểm tra mật khẩu nhập lại
     if (password !== confirmPassword) {
-      Alert.alert("Lỗi", "Mật khẩu nhập lại không khớp");
+      showAlert(
+        "Lỗi",
+        "Mật khẩu nhập lại không khớp",
+        null
+      );
+      return;
+    }
+
+    // Kiểm tra số điện thoại
+    if (phone.length < 10 || phone.length > 11) {
+      showAlert(
+        "Lỗi",
+        "Số điện thoại không hợp lệ",
+        null
+      );
       return;
     }
 
     try {
-      // Implement registration logic here
-      console.log("Register with:", { fullName, email, password });
-      // Navigate to Login after successful registration
-      navigation.navigate("Login");
+      setLoading(true);
+      const response = await fetch(API_ENDPOINTS.REGISTER, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username,
+          password,
+          fullname: fullName,
+          email,
+          phone,
+          address
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Đăng ký thất bại");
+      }
+
+      showAlert(
+        "Thành công",
+        "Đăng ký tài khoản thành công!",
+        () => navigation.navigate("Login")
+      );
     } catch (error) {
-      Alert.alert("Lỗi", "Đăng ký thất bại. Vui lòng thử lại!");
+      showAlert(
+        "Lỗi",
+        error.message || "Đăng ký thất bại. Vui lòng thử lại!",
+        null
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        onConfirm={alertConfig.onConfirm}
+        onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+      />
+      
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity 
@@ -59,7 +174,7 @@ const RegisterScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.content}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Title */}
         <View style={styles.titleContainer}>
           <Text style={styles.title}>Đăng Ký</Text>
@@ -77,15 +192,18 @@ const RegisterScreen = () => {
               onChangeText={setFullName}
             />
           </View>
-        <View>
-        <Text style={styles.label}>Tên đăng nhập<Text style={styles.required}>*</Text></Text>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Tên đăng nhập<Text style={styles.required}>*</Text></Text>
             <TextInput
               style={styles.input}
               placeholder="Tên đăng nhập"
               value={username}
               onChangeText={setUsername}
+              autoCapitalize="none"
             />
-        </View>
+          </View>
+
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Email <Text style={styles.required}>*</Text></Text>
             <TextInput
@@ -99,6 +217,29 @@ const RegisterScreen = () => {
           </View>
 
           <View style={styles.inputContainer}>
+            <Text style={styles.label}>Số điện thoại <Text style={styles.required}>*</Text></Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Số điện thoại"
+              value={phone}
+              onChangeText={handlePhoneChange}
+              keyboardType="numeric"
+              maxLength={11}
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Địa chỉ <Text style={styles.required}>*</Text></Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Địa chỉ"
+              value={address}
+              onChangeText={setAddress}
+              multiline
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
             <Text style={styles.label}>Mật khẩu <Text style={styles.required}>*</Text></Text>
             <View style={styles.passwordContainer}>
               <TextInput
@@ -106,6 +247,7 @@ const RegisterScreen = () => {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
+                placeholder="Mật khẩu (ít nhất 6 ký tự)"
               />
               <TouchableOpacity
                 style={styles.eyeIcon}
@@ -121,13 +263,14 @@ const RegisterScreen = () => {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Nhập lại mật khẩu mới <Text style={styles.required}>*</Text></Text>
+            <Text style={styles.label}>Nhập lại mật khẩu <Text style={styles.required}>*</Text></Text>
             <View style={styles.passwordContainer}>
               <TextInput
                 style={[styles.input, styles.passwordInput]}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry={!showConfirmPassword}
+                placeholder="Nhập lại mật khẩu"
               />
               <TouchableOpacity
                 style={styles.eyeIcon}
@@ -142,8 +285,14 @@ const RegisterScreen = () => {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
-            <Text style={styles.registerButtonText}>Đăng ký</Text>
+          <TouchableOpacity 
+            style={[styles.registerButton, loading && styles.disabledButton]} 
+            onPress={handleRegister}
+            disabled={loading}
+          >
+            <Text style={styles.registerButtonText}>
+              {loading ? "Đang xử lý..." : "Đăng ký"}
+            </Text>
           </TouchableOpacity>
 
           <View style={styles.loginContainer}>
@@ -153,7 +302,7 @@ const RegisterScreen = () => {
             </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -173,7 +322,6 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 24,
-    marginTop: 10,
   },
   titleContainer: {
     marginBottom: 32,
@@ -191,6 +339,7 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: 24,
+    paddingBottom: 40,
   },
   inputContainer: {
     gap: 8,
@@ -250,6 +399,9 @@ const styles = StyleSheet.create({
     color: "#E60023",
     fontSize: 14,
     fontWeight: "bold",
+  },
+  disabledButton: {
+    opacity: 0.7,
   },
 });
 
