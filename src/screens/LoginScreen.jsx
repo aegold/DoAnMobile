@@ -69,7 +69,7 @@ const LoginScreen = () => {
       {/* Form */}
       <View style={styles.content}>
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>Đăng Nhập</Text>
+          <Text style={styles.title}>Đăng Nhập HiHi</Text>
           <Text style={styles.subtitle}>Đăng nhập tài khoản của bạn</Text>
         </View>
 
