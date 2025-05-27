@@ -59,7 +59,7 @@ const OrderListScreen = ({ navigation }) => {
         Tổng tiền: {item.total.toLocaleString()} VNĐ
       </Text>
       <Text style={styles.orderStatus}>
-        Trạng thái: {item.status === "pending" ? "Chờ xử lý" : "Đã xử lý"}
+        Trạng thái: {item.status === "Đang xử lý" ? "Chờ xử lý" : "Đã xử lý"}
       </Text>
       <Text style={styles.viewDetail}>Nhấn để xem chi tiết</Text>
     </TouchableOpacity>

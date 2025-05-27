@@ -1,4 +1,4 @@
-const BASE_URL = 'http://192.168.1.5:3000';
+const BASE_URL = 'http://192.168.31.104:3000';
 //192.168.90.56
 //192.168.1.8
 //192.168.1.5
@@ -16,8 +16,13 @@ const API_ENDPOINTS = {
   REGISTER: `${BASE_URL}/api/auth/register`,
   LOGIN: `${BASE_URL}/api/auth/login`,
   USER: (userId) => `${BASE_URL}/api/user/${userId}`,
+  
+  // API quên mật khẩu
+  FORGOT_PASSWORD: `${BASE_URL}/api/auth/forgot-password`,  // Gửi OTP qua email
+  VERIFY_OTP: `${BASE_URL}/api/auth/verify-otp`,           // Xác thực mã OTP
+  RESET_PASSWORD: `${BASE_URL}/api/auth/reset-password`,    // Đặt lại mật khẩu mới
 };
 
 console.log("API Endpoints:", API_ENDPOINTS);
-  
+
 export { BASE_URL, API_ENDPOINTS };

@@ -6,21 +6,39 @@ import {
   TouchableOpacity,
   Image,
   StyleSheet,
+  Dimensions,
+  Platform,
 } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { BASE_URL, API_ENDPOINTS } from "../constants/api";
 import { useAuth } from "../context/AuthContext";
 import { useFocusEffect } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
+import { 
+  Sen_400Regular,
+  Sen_700Bold,
+  Sen_800ExtraBold,
+} from '@expo-google-fonts/sen';
+import { Inter_400Regular, Inter_700Bold } from '@expo-google-fonts/inter';
+import { useFonts } from 'expo-font';
+
+const { width } = Dimensions.get('window');
+const ITEM_SIZE = (width - 130) / 2; // 48 = padding left 16 + padding right 16 + gap 16
 
 const MenuScreen = ({ navigation }) => {
   const { user } = useAuth();
   const [categories, setCategories] = useState([]);
 
+  const [fontsLoaded] = useFonts({
+    Sen_400Regular,
+    Sen_700Bold,
+    Sen_800ExtraBold,
+  });
+
   const fetchCategories = async () => {
     try {
-      console.log("Fetching categories from:", API_ENDPOINTS.CATEGORIES);
       const response = await fetch(API_ENDPOINTS.CATEGORIES);
       const data = await response.json();
-      console.log("Categories received:", data);
       setCategories(data);
     } catch (error) {
       console.error("Lỗi lấy danh mục:", error);
@@ -33,58 +51,122 @@ const MenuScreen = ({ navigation }) => {
     }, [])
   );
 
-  const renderCategory = ({ item }) => (
-    <TouchableOpacity
-      style={styles.categoryItem}
-      onPress={() => navigation.navigate("DishList", { category: item })}
-    >
-      <Image
-        source={{ uri: `${BASE_URL}${item.image}` }}
-        style={styles.categoryImage}
-      />
+  if (!fontsLoaded) {
+    return null;
+  }
+
+  const renderCategory = ({ item, index }) => (
+    <View style={[
+      styles.categoryWrapper,
+      index % 2 === 0 ? { marginRight: 8 } : { marginLeft: 8 }
+    ]}>
+      <TouchableOpacity
+        style={styles.categoryItem}
+        onPress={() => navigation.navigate("DishList", { category: item })}
+      >
+        <Image
+          source={{ uri: `${BASE_URL}${item.image}` }}
+          style={styles.categoryImage}
+          resizeMode="contain"
+        />
+      </TouchableOpacity>
       <Text style={styles.categoryName}>{item.name}</Text>
-    </TouchableOpacity>
+    </View>
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView 
+      style={styles.container} 
+      edges={['right', 'left']}
+    >
       <View style={styles.header}>
-        <Text style={styles.title}>Thực đơn</Text>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="chevron-back" size={24} color="black" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Thực đơn</Text>
+        <View style={{ width: 40 }} />
       </View>
-      {categories.length === 0 ? (
-        <Text style={styles.emptyText}>Không có danh mục nào</Text>
-      ) : (
-        <FlatList
-          data={categories}
-          renderItem={renderCategory}
-          keyExtractor={(item) => item.id.toString()}
-          numColumns={2}
-        />
-      )}
-    </View>
+
+      <FlatList
+        data={categories}
+        renderItem={renderCategory}
+        keyExtractor={(item) => item.id.toString()}
+        numColumns={2}
+        contentContainerStyle={styles.listContainer}
+        columnWrapperStyle={styles.columnWrapper}
+        showsVerticalScrollIndicator={false}
+      />
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 10, backgroundColor: "#f5f5f5" },
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 10,
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
   },
-  categoryItem: { flex: 1, margin: 5, alignItems: "center" },
-  categoryImage: { width: 150, height: 150, borderRadius: 10 },
-  categoryName: { marginTop: 5, fontSize: 16, fontWeight: "bold" },
-  emptyText: {
+  headerTitle: {
+    fontSize: 35,
+    fontWeight: "600",
+    color: "#000",
+    fontFamily: "Inter_700Bold",
+  },
+  listContainer: {
+    padding: 40,
+    flex: 1,
+    flexDirection: "column",
+    justifyContent:"space-between",
+  },
+  columnWrapper: {
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  categoryWrapper: {
+    width: ITEM_SIZE,
+    alignItems: 'center',
+  },
+  categoryItem: {
+    
+    width: ITEM_SIZE,
+    height: ITEM_SIZE,
+    backgroundColor: "#fff",
+    borderRadius: 24,
+    padding: 12,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  categoryImage: {
+    width: "100%",
+    height: "100%",
+  },
+  categoryName: {
+    fontSize: 20,
+    fontFamily: 'Sen_700Bold',
+    color: "#000",
+    marginTop: 8,
     textAlign: "center",
-    marginTop: 20,
-    fontSize: 16,
-    color: "#666",
   },
 });
 

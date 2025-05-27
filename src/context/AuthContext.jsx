@@ -26,8 +26,10 @@ export const AuthProvider = ({ children }) => {
       const userData = {
         id: data.id,
         username: data.username,
-        name: data.name,
+        fullname: data.fullname,
         role: data.role,
+        address: data.address,
+        phone: data.phone,
         token: data.token,
       };
       console.log("Dữ liệu người dùng sau khi xử lý:", userData);
