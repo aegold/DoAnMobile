@@ -188,8 +188,8 @@ const styles = StyleSheet.create({
   avatar: {
     width: 100,
     height: 100,
-    borderRadius: 30,
-    backgroundColor: '#E60023',
+    borderRadius: 50,
+    
   },
   userInfo: {
     marginLeft: 12,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,11 +10,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
-import { BASE_URL } from '../constants/api';
+import { API_ENDPOINTS } from '../constants/api';
 import Toast from 'react-native-toast-message';
 
 const ChangePasswordScreen = ({ navigation }) => {
-  const { token } = useAuth();
+  const { user, logout } = useAuth();
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -22,10 +22,30 @@ const ChangePasswordScreen = ({ navigation }) => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Kiểm tra user khi màn hình được mount
+  useEffect(() => {
+    if (!user || !user.token) {
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Bạn cần đăng nhập lại để thực hiện chức năng này',
+      });
+      navigation.replace('Login');
+    }
+  }, [user]);
+
   const handleChangePassword = async () => {
     try {
+      console.log('Starting password change process...');
+      
+      // Kiểm tra user và token trước khi thực hiện
+      if (!user || !user.token) {
+        throw new Error('Bạn cần đăng nhập lại để thực hiện chức năng này');
+      }
+      
       // Validate inputs
       if (!oldPassword || !newPassword || !confirmPassword) {
+        console.log('Validation failed: Missing required fields');
         Toast.show({
           type: 'error',
           text1: 'Lỗi',
@@ -35,6 +55,7 @@ const ChangePasswordScreen = ({ navigation }) => {
       }
 
       if (newPassword !== confirmPassword) {
+        console.log('Validation failed: New passwords do not match');
         Toast.show({
           type: 'error',
           text1: 'Lỗi',
@@ -44,6 +65,7 @@ const ChangePasswordScreen = ({ navigation }) => {
       }
 
       if (newPassword.length < 6) {
+        console.log('Validation failed: Password too short');
         Toast.show({
           type: 'error',
           text1: 'Lỗi',
@@ -52,25 +74,60 @@ const ChangePasswordScreen = ({ navigation }) => {
         return;
       }
 
-      const response = await fetch(`${BASE_URL}/api/users/change-password`, {
+      console.log('Making API request to:', API_ENDPOINTS.CHANGE_PASSWORD);
+      console.log('Request headers:', {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${user.token?.substring(0, 10)}...`
+      });
+
+      const requestBody = {
+        oldPassword,
+        newPassword,
+        confirmPassword,
+      };
+      console.log('Request body:', { ...requestBody, oldPassword: '***', newPassword: '***', confirmPassword: '***' });
+
+      const response = await fetch(API_ENDPOINTS.CHANGE_PASSWORD, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${user.token}`,
         },
-        body: JSON.stringify({
-          oldPassword,
-          newPassword,
-          confirmPassword,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
-      const data = await response.json();
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
 
-      if (!response.ok) {
-        throw new Error(data.message);
+      const responseText = await response.text();
+      console.log('Raw response:', responseText);
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+        console.log('Parsed response data:', data);
+      } catch (parseError) {
+        console.error('JSON Parse error:', parseError);
+        throw new Error('Invalid JSON response from server');
       }
 
+      if (!response.ok) {
+        console.log('Request failed with status:', response.status);
+        // Kiểm tra nếu token không hợp lệ
+        if (data.error === 'Token không hợp lệ' || response.status === 401) {
+          Toast.show({
+            type: 'error',
+            text1: 'Lỗi',
+            text2: 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại',
+          });
+          await logout(); // Đăng xuất user
+          navigation.replace('Login');
+          return;
+        }
+        throw new Error(data.error || data.message || 'Lỗi không xác định từ server');
+      }
+
+      console.log('Password change successful');
       Toast.show({
         type: 'success',
         text1: 'Thành công',
@@ -86,10 +143,12 @@ const ChangePasswordScreen = ({ navigation }) => {
       navigation.goBack();
 
     } catch (error) {
+      console.error('Password change error:', error);
+      console.error('Error stack:', error.stack);
       Toast.show({
         type: 'error',
         text1: 'Lỗi',
-        text2: error.message,
+        text2: error.message || 'Có lỗi xảy ra khi đổi mật khẩu',
       });
     }
   };

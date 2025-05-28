@@ -9,7 +9,7 @@ const cartRoutes = require('./routes/cartRoutes');
 const manageRoutes = require('./routes/manageRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const userRoutes = require('./routes/userRoutes');
-
+const paymentRoutes = require('./routes/payment');
 const db = require('./db/db');
 const upload = require('./middlewares/upload');
 
@@ -73,8 +73,9 @@ app.use('/api', cartRoutes);
 app.use('/api', manageRoutes);
 app.use('/api', userRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);
-
+app.use('/api/payment', paymentRoutes);
 // Khởi động server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server đang chạy tại http://localhost:${PORT}`);

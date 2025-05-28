@@ -160,7 +160,6 @@ const changePassword = async (req, res) => {
                 res.status(200).json({ message: 'Đổi mật khẩu thành công' });
             });
         });
-
     } catch (error) {
         console.error('Change password error:', error);
         res.status(500).json({ message: 'Lỗi server khi đổi mật khẩu' });

@@ -21,6 +21,8 @@ import UserOrderDetailScreen from './src/screens/UserOrderDetailScreen';
 import AdminOrderDetailScreen from './src/screens/AdminOrderDetailScreen';
 import AdminScreen from './src/screens/AdminScreen';
 import ChangePasswordScreen from './src/screens/ChangePasswordScreen';
+import FoodDetailScreen from './src/screens/FoodDetailScreen';
+import DishScreen from './src/screens/DishScreen';
 import { FontProvider } from './src/context/FontContext';
 const Stack = createStackNavigator();
 
@@ -95,6 +97,16 @@ const App = () => {
                 <Stack.Screen
                   name="ChangePassword"
                   component={ChangePasswordScreen}
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="FoodDetail"
+                  component={FoodDetailScreen}
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="DishScreen"
+                  component={DishScreen}
                   options={{ headerShown: false }}
                 />
               </Stack.Navigator>

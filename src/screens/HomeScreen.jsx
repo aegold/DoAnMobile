@@ -9,7 +9,8 @@ import {
   FlatList,
   SafeAreaView,
   StatusBar,
-  TouchableOpacity
+  TouchableOpacity,
+  Alert,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import Swiper from "react-native-swiper";
@@ -34,20 +35,72 @@ try {
 const HomeScreen = ({ navigation }) => {
   const { fetchWithAuth } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [combos, setCombos] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [comboDishes, setComboDishes] = useState([]);
   const searchInputRef = useRef(null);
 
   useEffect(() => {
-    fetchCombos();
+    fetchCategories();
+    fetchComboDishes();
   }, []);
 
-  const fetchCombos = async () => {
+  const fetchCategories = async () => {
     try {
-      const response = await fetchWithAuth(`${BASE_URL}/api/dishes`);
+      const response = await fetchWithAuth(`${BASE_URL}/api/categories`);
       if (response.ok) {
         const data = await response.json();
-        setCombos(data);
+        setCategories(data);
+      } else {
+        console.error('Failed to fetch categories');
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
+  const fetchComboDishes = async () => {
+    try {
+      console.log('Fetching combo dishes...');
+      // Lấy danh sách món ăn từ danh mục Combo
+      const response = await fetchWithAuth(`${BASE_URL}/api/categories`);
+      console.log('Categories response status:', response.status);
+
+      const responseText = await response.text();
+      console.log('Categories raw response:', responseText);
+
+      const categories = JSON.parse(responseText);
+      console.log('Parsed categories:', categories);
+
+      // Tìm category có tên là "Combo"
+      const comboCategory = categories.find(cat => cat.name.toLowerCase() === 'combo');
+      
+      if (!comboCategory) {
+        console.log('Không tìm thấy danh mục Combo');
+        return;
+      }
+
+      console.log('Found Combo category:', comboCategory);
+
+      // Lấy dishes từ danh mục Combo
+      const dishesResponse = await fetchWithAuth(`${BASE_URL}/api/dishes/${comboCategory.id}`);
+      console.log('Dishes response status:', dishesResponse.status);
+
+      const dishesText = await dishesResponse.text();
+      console.log('Dishes raw response:', dishesText);
+
+      if (dishesResponse.ok) {
+        try {
+          const dishes = JSON.parse(dishesText);
+          console.log('Parsed combo dishes:', dishes);
+          setComboDishes(dishes);
+        } catch (parseError) {
+          console.error('JSON Parse error:', parseError);
+          console.error('Invalid JSON response:', dishesText);
+          Alert.alert('Lỗi', 'Định dạng dữ liệu không hợp lệ');
+        }
+      } else {
+        console.error('API Error Response:', dishesText);
+        Alert.alert('Lỗi', 'Không thể lấy danh sách combo');
       }
     } catch (error) {
       console.error("Lỗi khi lấy danh sách combo:", error);
@@ -60,6 +113,28 @@ const HomeScreen = ({ navigation }) => {
       navigation.navigate("SearchResults", { query: searchQuery });
     }
   };
+
+  const handleDishPress = (dish) => {
+    navigation.navigate("FoodDetail", { dish });
+  };
+
+  const handleCategoryPress = (category) => {
+    navigation.navigate("DishScreen", { category });
+  };
+
+  const renderCategorySlide = (category) => (
+    <TouchableOpacity 
+      style={styles.slide}
+      onPress={() => handleCategoryPress(category)}
+      key={category.id}
+    >
+      <Image 
+        source={{ uri: `${BASE_URL}${category.image}` }} 
+        style={styles.image} 
+        resizeMode="cover"
+      />
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
@@ -104,7 +179,7 @@ const HomeScreen = ({ navigation }) => {
       </View>
 
       <FlatList
-        data={combos}
+        data={comboDishes}
         keyExtractor={(item) => item.id.toString()}
         ListHeaderComponent={
           <>
@@ -112,32 +187,30 @@ const HomeScreen = ({ navigation }) => {
               style={[styles.swiper, { height: imageHeight }]}
               autoplay
               loop
+              autoplayTimeout={3}
+              showsPagination={true}
+              dotStyle={styles.dot}
+              activeDotStyle={styles.activeDot}
             >
-              <View style={styles.slide}>
-                <Image source={img1} style={styles.image} resizeMode="cover" />
-              </View>
-              <View style={styles.slide}>
-                <Image source={img2} style={styles.image} resizeMode="cover" />
-              </View>
-              <View style={styles.slide}>
-                <Image source={img3} style={styles.image} resizeMode="cover" />
-              </View>
+              {categories.map(category => renderCategorySlide(category))}
             </Swiper>
             <Text style={styles.comboTitle}>COMBO</Text>
           </>
         }
         renderItem={({ item }) => (
-          <TouchableOpacity>
-          <View style={styles.comboItem}>
+          <TouchableOpacity 
+            style={styles.comboItem}
+            onPress={() => handleDishPress(item)}
+          >
             <Image
               source={{ uri: `${BASE_URL}${item.image}` }}
-              style={styles.image}
+              style={styles.comboImage}
               resizeMode="cover"
             />
-          </View>
           </TouchableOpacity>
         )}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        contentContainerStyle={styles.listContainer}
+        showsVerticalScrollIndicator={false}
       />
     </View>
   );
@@ -198,19 +271,53 @@ const styles = StyleSheet.create({
   },
   swiper: {
     marginVertical: 20,
-    
   },
   slide: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#fff",
-    
   },
   image: {
     width: imageWidth,
     height: imageHeight,
     borderRadius: 15,
+  },
+  categoryOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    padding: 15,
+    borderBottomLeftRadius: 15,
+    borderBottomRightRadius: 15,
+  },
+  categoryName: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  dot: {
+    backgroundColor: 'rgba(255,255,255,.3)',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginLeft: 3,
+    marginRight: 3,
+  },
+  activeDot: {
+    backgroundColor: '#fff',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginLeft: 3,
+    marginRight: 3,
+  },
+  listContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   comboTitle: {
     fontSize: 35,
@@ -222,8 +329,36 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   comboItem: {
-    marginBottom: 30,
-    alignItems: "center",
+    marginBottom: 20,
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  comboImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 15,
+  },
+  comboInfo: {
+    padding: 15,
+  },
+  comboName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 5,
+  },
+  comboPrice: {
+    fontSize: 16,
+    color: '#E60023',
+    fontWeight: 'bold',
   },
 });
 

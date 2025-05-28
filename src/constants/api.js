@@ -20,6 +20,10 @@ const API_ENDPOINTS = {
   LOGIN: `${BASE_URL}/api/auth/login`,
   USER: (userId) => `${BASE_URL}/api/user/${userId}`,
   UPDATE_PROFILE: `${BASE_URL}/api/profile`,
+  PAYMENT: `${BASE_URL}/api/payment`,
+  VNPAY_RETURN: `${BASE_URL}/api/payment/vnpay-return`,
+  CHANGE_PASSWORD: `${BASE_URL}/api/users/change-password`,
+
   
   // API quên mật khẩu
   FORGOT_PASSWORD: `${BASE_URL}/api/auth/forgot-password`,  // Gửi OTP qua email
