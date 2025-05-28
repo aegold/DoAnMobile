@@ -188,7 +188,7 @@ const ProfileScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fff',
   },
   header: {
     flexDirection: 'row',
@@ -235,13 +235,14 @@ const styles = StyleSheet.create({
   },
   form: {
     padding: 16,
+    backgroundColor: '#fff',
   },
   inputGroup: {
     marginBottom: 16,
   },
   label: {
     fontSize: 16,
-    color: '#666',
+    color: '#000',
     marginBottom: 8,
   },
   input: {
@@ -250,7 +251,7 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#E60023',
   },
   saveButton: {
     backgroundColor: '#E60023',

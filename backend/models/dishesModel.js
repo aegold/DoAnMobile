@@ -38,14 +38,41 @@ const createDish = (categoryId, name, description, price, image) => {
   });
 };
 
-const updateDish = (id, categoryId, name, description, price, image) => {
-  return new Promise((resolve, reject) => {
-    db.run(
-      'UPDATE Dishes SET category_id = ?, name = ?, description = ?, price = ?, image = ? WHERE id = ?',
-      [categoryId, name, description, price, image, id],
-      (err) => (err ? reject(err) : resolve())
-    );
-  });
+const updateDish = async (id, categoryId, name, description, price, image) => {
+  try {
+    // Lấy thông tin món ăn hiện tại
+    const currentDish = await getDishById(id);
+    if (!currentDish) {
+      throw new Error('Không tìm thấy món ăn');
+    }
+
+    // Sử dụng ảnh cũ nếu không có ảnh mới
+    const updatedImage = image || currentDish.image;
+
+    // Cập nhật thông tin món ăn
+    return new Promise((resolve, reject) => {
+      db.run(
+        'UPDATE Dishes SET category_id = ?, name = ?, description = ?, price = ?, image = ? WHERE id = ?',
+        [categoryId, name, description, price, updatedImage, id],
+        (err) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve({
+              id,
+              category_id: categoryId,
+              name,
+              description,
+              price,
+              image: updatedImage
+            });
+          }
+        }
+      );
+    });
+  } catch (error) {
+    throw error;
+  }
 };
 
 const deleteDish = (id) => {
@@ -53,6 +80,7 @@ const deleteDish = (id) => {
     db.run('DELETE FROM Dishes WHERE id = ?', [id], (err) => (err ? reject(err) : resolve()));
   });
 };
+
 const getDishById = (dishId) => {
   return new Promise((resolve, reject) => {
     db.get('SELECT * FROM Dishes WHERE id = ?', [dishId], (err, dish) => {
@@ -65,6 +93,7 @@ const getDishById = (dishId) => {
     });
   });
 };
+
 const searchDishes = (query) => {
   return new Promise((resolve, reject) => {
     console.log('Searching with query:', query);
@@ -85,11 +114,11 @@ const searchDishes = (query) => {
 };
 
 module.exports = {
-    getDishesByCategory,
-    getAllDishes,
-    createDish,
-    updateDish,
-    deleteDish,
-    getDishById,
-    searchDishes,
+  getDishesByCategory,
+  getAllDishes,
+  createDish,
+  updateDish,
+  deleteDish,
+  getDishById,
+  searchDishes,
 }

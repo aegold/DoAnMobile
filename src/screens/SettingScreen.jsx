@@ -156,7 +156,7 @@ const SettingScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fff',
   },
   header: {
     flexDirection: 'row',
@@ -186,8 +186,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   avatar: {
-    width: 60,
-    height: 60,
+    width: 100,
+    height: 100,
     borderRadius: 30,
     backgroundColor: '#E60023',
   },
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   userName: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#000',
     marginBottom: 4,

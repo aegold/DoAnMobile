@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { API_ENDPOINTS, BASE_URL } from "../constants/api";
 import { useCart } from "../context/CartContext";
+import Toast from "react-native-toast-message";
 
 const SearchResultsScreen = ({ route }) => {
   const { query } = route.params;
@@ -34,8 +35,26 @@ const SearchResultsScreen = ({ route }) => {
   }, [query]);
 
   const handleAddToCart = (item) => {
-    console.log("Adding to cart:", item);
-    addToCart(item);
+    try {
+      addToCart(item);
+      Toast.show({
+        type: 'success',
+        text1: 'Thêm vào giỏ hàng thành công',
+        text2: `Đã thêm ${item.name} vào giỏ hàng`,
+        position: 'bottom',
+        visibilityTime: 2000,
+        autoHide: true,
+      });
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Không thể thêm món ăn vào giỏ hàng',
+        position: 'bottom',
+        visibilityTime: 2000,
+        autoHide: true,
+      });
+    }
   };
 
   const renderDish = ({ item }) => (

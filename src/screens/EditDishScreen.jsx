@@ -13,6 +13,7 @@ import { Picker } from "@react-native-picker/picker";
 import { useAuth } from "../context/AuthContext";
 import { BASE_URL } from "../constants/api";
 import * as ImagePicker from "expo-image-picker";
+import { ScrollView } from "react-native-gesture-handler";
 
 const EditDishScreen = ({ route, navigation }) => {
   const { fetchWithAuth } = useAuth();
@@ -178,7 +179,7 @@ const EditDishScreen = ({ route, navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <Text style={styles.title}>Sửa món ăn</Text>
       <TextInput
         style={styles.input}
@@ -228,7 +229,7 @@ const EditDishScreen = ({ route, navigation }) => {
       <TouchableOpacity style={styles.button} onPress={handleUpdateDish}>
         <Text style={styles.buttonText}>Cập nhật món ăn</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -274,11 +275,13 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignItems: "center",
     marginVertical: 10,
+  
   },
   buttonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+    
   },
   imageButton: {
     backgroundColor: "#4CAF50",

@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  Image
+  Image,
+  ActivityIndicator
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { API_ENDPOINTS, BASE_URL } from "../constants/api";
@@ -29,111 +30,119 @@ const ManageDishesScreen = ({ navigation }) => {
   const fetchDishes = async () => {
     setIsLoading(true);
     try {
-      const url = `${BASE_URL}/api/dishes`;
-      console.log("Đang kết nối tới:", url);
-
-      const response = await fetchWithAuth(url, {
+      const response = await fetchWithAuth(`${BASE_URL}/api/dishes`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Accept: "application/json",
         },
-        timeout: 10000, // 10 giây timeout
       });
 
-      console.log("Trạng thái phản hồi:", response.status);
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Dữ liệu món ăn từ API:", JSON.stringify(data, null, 2));
-        setDishes(data);
-      } else {
-        const errorData = await response.json();
-        console.log("Phản hồi lỗi:", errorData);
-        Alert.alert("Lỗi kết nối", "Không thể kết nối tới server");
+      if (!response.ok) {
+        throw new Error('Không thể tải danh sách món ăn');
       }
-    } catch (err) {
-      console.error("Chi tiết lỗi:", err);
-      if (err.message.includes("Network request failed")) {
-        Alert.alert("Lỗi kết nối", "Không thể kết nối tới server.");
-      } else {
-        Alert.alert("Lỗi", "Có lỗi xảy ra: " + err.message);
-      }
+
+      const data = await response.json();
+      setDishes(data);
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách món ăn:", error);
+      Alert.alert(
+        "Lỗi",
+        "Không thể tải danh sách món ăn. Vui lòng thử lại sau."
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDeleteDish = async (dishId) => {
-    try {
-      console.log("Deleting dish with ID:", dishId);
-      const response = await fetchWithAuth(
-        `${API_ENDPOINTS.BASE_URL}/api/dishes/${dishId}`,
+    Alert.alert(
+      "Xác nhận",
+      "Bạn có chắc chắn muốn xóa món ăn này không?",
+      [
         {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+          text: "Hủy",
+          style: "cancel"
+        },
+        {
+          text: "Xóa",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const response = await fetchWithAuth(`${BASE_URL}/api/dishes/${dishId}`, {
+                method: "DELETE",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              });
 
-      if (response.ok) {
-        Alert.alert("Thành công", "Xóa món ăn thành công");
-        fetchDishes();
-      } else {
-        const result = await response.json();
-        console.log("Delete error response:", result);
-        Alert.alert("Lỗi", result.error || "Không thể xóa món ăn");
-      }
-    } catch (err) {
-      console.error("Error deleting dish:", err);
-      Alert.alert("Lỗi", "Có lỗi xảy ra, vui lòng thử lại");
-    }
-  };
+              if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Không thể xóa món ăn');
+              }
 
-  const renderDishItem = ({ item }) => {
-    console.log("Dữ liệu item trong renderDishItem:", item);
-    return (
-      <View style={styles.dishItem}>
-        <Image
-          source={{ uri: `${BASE_URL}${item.image}` }}
-          style={styles.dishImage}
-          resizeMode="cover"
-        />
-        <Text style={styles.dishName}>{item.name}</Text>
-        <Text style={styles.dishPrice}>{item.price} VNĐ</Text>
-        
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() =>
-              navigation.navigate("EditDish", {
-                dish: item,
-                onUpdate: fetchDishes,
-              })
+              Alert.alert("Thành công", "Xóa món ăn thành công");
+              fetchDishes(); // Tải lại danh sách sau khi xóa
+            } catch (error) {
+              console.error("Lỗi khi xóa món ăn:", error);
+              Alert.alert(
+                "Lỗi",
+                "Không thể xóa món ăn. Vui lòng thử lại sau."
+              );
             }
-          >
-            <Text style={styles.buttonText}>Sửa</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={() => handleDeleteDish(item.id)}
-          >
-            <Text style={styles.buttonText}>Xóa</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+          }
+        }
+      ]
     );
   };
+
+  const renderDishItem = ({ item }) => (
+    <View style={styles.dishItem}>
+      <Image
+        source={{ 
+          uri: item.image ? `${BASE_URL}${item.image}` : `${BASE_URL}/public/images/default-dish.png`
+        }}
+        style={styles.dishImage}
+        resizeMode="cover"
+      />
+      <View style={styles.dishInfo}>
+        <Text style={styles.dishName}>{item.name}</Text>
+        <Text style={styles.dishPrice}>{item.price.toLocaleString('vi-VN')} VNĐ</Text>
+      </View>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={() => navigation.navigate("EditDish", {
+            dish: item,
+            onUpdate: fetchDishes,
+          })}
+        >
+          <Text style={styles.buttonText}>Sửa</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => handleDeleteDish(item.id)}
+        >
+          <Text style={styles.buttonText}>Xóa</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#E60023" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Quản lý món ăn</Text>
+        
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() =>
-            navigation.navigate("AddDish", { onUpdate: fetchDishes })
-          }
+          onPress={() => navigation.navigate("AddDish", { onUpdate: fetchDishes })}
         >
           <Text style={styles.addButtonText}>+ Thêm món</Text>
         </TouchableOpacity>
@@ -145,6 +154,7 @@ const ManageDishesScreen = ({ navigation }) => {
         ListEmptyComponent={
           <Text style={styles.emptyText}>Không có món ăn nào</Text>
         }
+        contentContainerStyle={styles.listContainer}
       />
     </View>
   );
@@ -153,26 +163,34 @@ const ManageDishesScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    backgroundColor: "#f5f5f5",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: "#f5f5f5",
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    paddingTop: 5,
+    marginLeft: 12,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 20,
     color: "#333",
   },
+  listContainer: {
+    padding: 12,
+  },
   addButton: {
-    backgroundColor: "#e91e63",
-    padding: 10,
-    borderRadius: 5,
+    backgroundColor: "#E60023",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
   },
   addButtonText: {
     color: "#fff",
@@ -181,40 +199,61 @@ const styles = StyleSheet.create({
   },
   dishItem: {
     backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 5,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: "#ddd",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  dishImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    backgroundColor: '#f0f0f0',
+  },
+  dishInfo: {
+    flex: 1,
+    marginLeft: 12,
   },
   dishName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
     color: "#333",
+    marginBottom: 4,
   },
   dishPrice: {
-    fontSize: 16,
+    fontSize: 14,
     color: "#666",
-    marginVertical: 5,
   },
   buttonContainer: {
     flexDirection: "row",
-    justifyContent: "flex-end",
+    marginLeft: 8,
   },
   editButton: {
     backgroundColor: "#4CAF50",
-    padding: 10,
-    borderRadius: 5,
-    marginRight: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    marginRight: 8,
   },
   deleteButton: {
-    backgroundColor: "#F44336",
-    padding: 10,
-    borderRadius: 5,
+    backgroundColor: "#E60023",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
   },
   buttonText: {
     color: "#fff",
-    fontWeight: "bold",
+    fontSize: 14,
+    fontWeight: "500",
   },
   emptyText: {
     textAlign: "center",
