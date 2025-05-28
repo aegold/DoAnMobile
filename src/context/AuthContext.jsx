@@ -27,10 +27,12 @@ export const AuthProvider = ({ children }) => {
         id: data.id,
         username: data.username,
         fullname: data.fullname,
+        email: data.email,
         role: data.role,
         address: data.address,
         phone: data.phone,
         token: data.token,
+        image: data.image,
       };
       console.log("Dữ liệu người dùng sau khi xử lý:", userData);
       setUser(userData);
@@ -38,6 +40,18 @@ export const AuthProvider = ({ children }) => {
       console.log("Đã lưu thông tin người dùng vào AsyncStorage");
     } catch (error) {
       console.error("Lỗi khi xử lý đăng nhập:", error);
+      throw error;
+    }
+  };
+
+  const updateUserData = async (newData) => {
+    try {
+      const updatedUser = { ...user, ...newData };
+      setUser(updatedUser);
+      await AsyncStorage.setItem("user", JSON.stringify(updatedUser));
+      console.log("Đã cập nhật thông tin người dùng:", updatedUser);
+    } catch (error) {
+      console.error("Lỗi khi cập nhật thông tin người dùng:", error);
       throw error;
     }
   };
@@ -93,7 +107,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, fetchWithAuth }}>
+    <AuthContext.Provider value={{ user, login, logout, fetchWithAuth, updateUserData }}>
       {children}
     </AuthContext.Provider>
   );

@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 // Thời gian hết hạn của OTP (5 phút)
 const OTP_EXPIRY = 300000;
 
-const register = (username, password, fullname, email, phone, address, role = "user") => {
+const register = (username, password, fullname, email, phone, address, image, role = "user") => {
   return new Promise((resolve, reject) => {
     // Kiểm tra username, email và số điện thoại đã tồn tại chưa
     db.get(
@@ -42,15 +42,15 @@ const register = (username, password, fullname, email, phone, address, role = "u
 
           // Thêm user mới
           db.run(
-            "INSERT INTO Users (username, password, fullname, email, phone, address, role) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            [username, hashedPassword, fullname, email, phone, address, role],
+            "INSERT INTO Users (username, password, fullname, email, phone, address, image, role) VALUES (?,?,?, ?, ?, ?, ?, ?, ?)",
+            [username, hashedPassword, fullname, email, phone, address,image,role],
             function (err) {
               if (err) {
                 console.error("Error creating user:", err);
                 reject(err);
                 return;
               }
-              resolve({ id: this.lastID, username, fullname, email, phone, address, role });
+              resolve({ id: this.lastID, username, fullname, email, phone, address,image, role });
             }
           );
         });
@@ -95,6 +95,7 @@ const login = (username, password) => {
             email: user.email,
             phone: user.phone,
             address: user.address,
+            image: user.image,
             role: user.role,
           });
         });
@@ -211,11 +212,68 @@ const checkEmailExists = (email) => {
   });
 };
 
+// Cập nhật thông tin cá nhân
+const updateProfile = (userId, { fullname, email, phone, address }) => {
+  return new Promise((resolve, reject) => {
+    // Kiểm tra email đã tồn tại chưa (trừ email hiện tại của user)
+    db.get(
+      "SELECT * FROM Users WHERE email = ? AND id != ?",
+      [email, userId],
+      (err, existingUser) => {
+        if (err) {
+          console.error("Error checking email:", err);
+          reject(err);
+          return;
+        }
+
+        if (existingUser) {
+          reject(new Error("Email đã được sử dụng"));
+          return;
+        }
+
+        // Cập nhật thông tin người dùng
+        db.run(
+          "UPDATE Users SET fullname = ?, email = ?, phone = ?, address = ? WHERE id = ?",
+          [fullname, email, phone || null, address || null, userId],
+          function(err) {
+            if (err) {
+              console.error("Error updating user:", err);
+              reject(err);
+              return;
+            }
+
+            // Lấy thông tin người dùng sau khi cập nhật
+            db.get(
+              "SELECT id, username, fullname, email, phone, address, role, image FROM Users WHERE id = ?",
+              [userId],
+              (err, user) => {
+                if (err) {
+                  console.error("Error fetching updated user:", err);
+                  reject(err);
+                  return;
+                }
+
+                if (!user) {
+                  reject(new Error("Không tìm thấy thông tin người dùng"));
+                  return;
+                }
+
+                resolve(user);
+              }
+            );
+          }
+        );
+      }
+    );
+  });
+};
+
 module.exports = {
   register,
   login,
   generateResetOTP,
   verifyResetOTP,
   resetPassword,
-  checkEmailExists
+  checkEmailExists,
+  updateProfile
 }; 

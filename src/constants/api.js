@@ -19,6 +19,7 @@ const API_ENDPOINTS = {
   REGISTER: `${BASE_URL}/api/auth/register`,
   LOGIN: `${BASE_URL}/api/auth/login`,
   USER: (userId) => `${BASE_URL}/api/user/${userId}`,
+  UPDATE_PROFILE: `${BASE_URL}/api/profile`,
   
   // API quên mật khẩu
   FORGOT_PASSWORD: `${BASE_URL}/api/auth/forgot-password`,  // Gửi OTP qua email
@@ -26,6 +27,6 @@ const API_ENDPOINTS = {
   RESET_PASSWORD: `${BASE_URL}/api/auth/reset-password`,    // Đặt lại mật khẩu mới
 };
 
-console.log("API Endpoints:", API_ENDPOINTS);
+// console.log("API Endpoints:", API_ENDPOINTS);
 
 export { BASE_URL, API_ENDPOINTS };

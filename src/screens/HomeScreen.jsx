@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -36,6 +36,7 @@ const HomeScreen = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
   const [combos, setCombos] = useState([]);
+  const searchInputRef = useRef(null);
 
   useEffect(() => {
     fetchCombos();
@@ -83,16 +84,23 @@ const HomeScreen = ({ navigation }) => {
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
+        <TouchableOpacity 
+          style={styles.searchBar}
+          activeOpacity={0.7}
+          onPress={() => searchInputRef.current?.focus()}
+        >
           <Ionicons name="search-outline" size={20} color="#666" style={styles.searchIcon} />
           <TextInput
+            ref={searchInputRef}
             style={styles.searchInput}
             placeholder="Tìm kiếm"
             placeholderTextColor="#666"
             value={searchQuery}
             onChangeText={setSearchQuery}
+            onSubmitEditing={handleSearch}
+            returnKeyType="search"
           />
-        </View>
+        </TouchableOpacity>
       </View>
 
       <FlatList

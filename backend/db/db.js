@@ -30,7 +30,7 @@ async function setupDatabase() {
     // await runSQL('DROP TABLE IF EXISTS OrderItems');
     // await runSQL('DROP TABLE IF EXISTS Users');
 
-    // // Tạo bảng Categories
+    // Tạo bảng Categories
     // await runSQL(`
     //   CREATE TABLE IF NOT EXISTS Categories (
     //     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -73,6 +73,7 @@ async function setupDatabase() {
     //     email TEXT UNIQUE NOT NULL,
     //     phone TEXT UNIQUE NOT NULL,
     //     address TEXT NOT NULL,
+    //     image TEXT DEFAULT '/public/images/avatar-default.png',
     //     role TEXT DEFAULT 'user',
     //     resetOTP TEXT,
     //     resetOTPExpiry INTEGER

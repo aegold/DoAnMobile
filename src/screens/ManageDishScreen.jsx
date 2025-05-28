@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  Image
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { API_ENDPOINTS, BASE_URL } from "../constants/api";
@@ -93,8 +94,14 @@ const ManageDishesScreen = ({ navigation }) => {
     console.log("Dữ liệu item trong renderDishItem:", item);
     return (
       <View style={styles.dishItem}>
+        <Image
+          source={{ uri: `${BASE_URL}${item.image}` }}
+          style={styles.dishImage}
+          resizeMode="cover"
+        />
         <Text style={styles.dishName}>{item.name}</Text>
         <Text style={styles.dishPrice}>{item.price} VNĐ</Text>
+        
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.editButton}

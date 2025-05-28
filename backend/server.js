@@ -8,6 +8,7 @@ const dishesRoutes = require('./routes/dishesRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const manageRoutes = require('./routes/manageRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 const db = require('./db/db');
 const upload = require('./middlewares/upload');
@@ -70,10 +71,9 @@ app.use('/api', dishesRoutes);
 app.use('/api', categoriesRoutes);
 app.use('/api', cartRoutes);
 app.use('/api', manageRoutes);
+app.use('/api', userRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/orders/', orderRoutes);
-
-
+app.use('/api/orders', orderRoutes);
 
 // Khởi động server
 app.listen(PORT, '0.0.0.0', () => {

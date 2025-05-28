@@ -19,6 +19,8 @@ import CheckoutScreen from './src/screens/CheckoutScreen';
 import OrderHistoryScreen from './src/screens/OrderHistoryScreen';
 import UserOrderDetailScreen from './src/screens/UserOrderDetailScreen';
 import AdminOrderDetailScreen from './src/screens/AdminOrderDetailScreen';
+import AdminScreen from './src/screens/AdminScreen';
+import ChangePasswordScreen from './src/screens/ChangePasswordScreen';
 import { FontProvider } from './src/context/FontContext';
 const Stack = createStackNavigator();
 
@@ -48,6 +50,11 @@ const App = () => {
                 <Stack.Screen
                   name="BottomTabNavigator"
                   component={BottomTabNavigator}
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="Admin"
+                  component={AdminScreen}
                   options={{ headerShown: false }}
                 />
                 <Stack.Screen
@@ -83,6 +90,11 @@ const App = () => {
                 <Stack.Screen
                   name="AdminOrderDetail"
                   component={AdminOrderDetailScreen}
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="ChangePassword"
+                  component={ChangePasswordScreen}
                   options={{ headerShown: false }}
                 />
               </Stack.Navigator>

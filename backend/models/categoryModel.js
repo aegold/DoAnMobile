@@ -1,5 +1,6 @@
 const db = require('../db/db');
 const bcrypt = require('bcrypt');
+
 const getCategories = () => {
   return new Promise((resolve, reject) => {
     db.all('SELECT * FROM Categories', [], (err, rows) => {
@@ -7,6 +8,21 @@ const getCategories = () => {
       else {
         console.log('Categories from DB:', rows);
         resolve(rows);
+      }
+    });
+  });
+};
+
+const getCategoryById = (id) => {
+  return new Promise((resolve, reject) => {
+    db.get('SELECT * FROM Categories WHERE id = ?', [id], (err, row) => {
+      if (err) {
+        console.error('Error getting category:', err);
+        reject(err);
+      } else if (!row) {
+        reject(new Error('Không tìm thấy danh mục'));
+      } else {
+        resolve(row);
       }
     });
   });
@@ -40,8 +56,10 @@ const deleteCategory = (id) => {
     db.run('DELETE FROM Categories WHERE id = ?', [id], (err) => (err ? reject(err) : resolve()));
   });
 };
+
 module.exports = {
   getCategories,
+  getCategoryById,
   createCategory,
   updateCategory,
   deleteCategory,

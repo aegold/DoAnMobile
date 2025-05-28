@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   Image,
   StyleSheet,
   Dimensions,
-  Platform,
 } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BASE_URL, API_ENDPOINTS } from "../constants/api";
@@ -23,7 +22,7 @@ import { Inter_400Regular, Inter_700Bold } from '@expo-google-fonts/inter';
 import { useFonts } from 'expo-font';
 
 const { width } = Dimensions.get('window');
-const ITEM_SIZE = (width - 130) / 2; // 48 = padding left 16 + padding right 16 + gap 16
+const ITEM_SIZE = (width - 48) / 2; // 48 = padding left 16 + padding right 16 + gap 16
 
 const MenuScreen = ({ navigation }) => {
   const { user } = useAuth();
@@ -33,6 +32,8 @@ const MenuScreen = ({ navigation }) => {
     Sen_400Regular,
     Sen_700Bold,
     Sen_800ExtraBold,
+    Inter_400Regular,
+    Inter_700Bold
   });
 
   const fetchCategories = async () => {
@@ -55,6 +56,19 @@ const MenuScreen = ({ navigation }) => {
     return null;
   }
 
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <TouchableOpacity 
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+      >
+        <Ionicons name="chevron-back" size={24} color="black" />
+      </TouchableOpacity>
+      <Text style={styles.headerTitle}>Thực đơn</Text>
+      <View style={{ width: 40 }} />
+    </View>
+  );
+
   const renderCategory = ({ item, index }) => (
     <View style={[
       styles.categoryWrapper,
@@ -75,21 +89,7 @@ const MenuScreen = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView 
-      style={styles.container} 
-      edges={['right', 'left']}
-    >
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="chevron-back" size={24} color="black" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Thực đơn</Text>
-        <View style={{ width: 40 }} />
-      </View>
-
+    <SafeAreaView style={styles.container} edges={['top']}>
       <FlatList
         data={categories}
         renderItem={renderCategory}
@@ -98,6 +98,8 @@ const MenuScreen = ({ navigation }) => {
         contentContainerStyle={styles.listContainer}
         columnWrapperStyle={styles.columnWrapper}
         showsVerticalScrollIndicator={false}
+        ListHeaderComponent={renderHeader}
+        stickyHeaderIndices={[0]}
       />
     </SafeAreaView>
   );
@@ -114,6 +116,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 12,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#f5f5f5",
   },
   backButton: {
     width: 40,
@@ -128,10 +133,8 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_700Bold",
   },
   listContainer: {
-    padding: 40,
-    flex: 1,
-    flexDirection: "column",
-    justifyContent:"space-between",
+    padding: 16,
+    paddingBottom: 24,
   },
   columnWrapper: {
     justifyContent: 'space-between',
@@ -142,7 +145,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   categoryItem: {
-    
     width: ITEM_SIZE,
     height: ITEM_SIZE,
     backgroundColor: "#fff",

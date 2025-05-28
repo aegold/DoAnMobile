@@ -29,13 +29,34 @@ const createCategory = async (req, res) => {
 const updateCategory = async (req, res) => {
   const { id } = req.params;
   const { name } = req.body;
-  if (!name) {
-    return res.status(400).json({ error: 'Tên danh mục là bắt buộc' });
-  }
+
   try {
-    const image = req.file ? `/public/images/${req.file.filename}` : req.body.image;
-    await categoriesModel.updateCategory(id, name, image);
-    res.json({ message: 'Cập nhật danh mục thành công' });
+    // Kiểm tra danh mục tồn tại
+    const existingCategory = await categoriesModel.getCategoryById(id);
+    if (!existingCategory) {
+      return res.status(404).json({ error: 'Không tìm thấy danh mục' });
+    }
+
+    // Kiểm tra và xác thực tên danh mục
+    const updatedName = name || existingCategory.name;
+
+    // Xử lý ảnh: giữ ảnh cũ nếu không có ảnh mới
+    let updatedImage = existingCategory.image; // Mặc định giữ ảnh cũ
+    if (req.file) {
+      // Nếu có ảnh mới được tải lên
+      updatedImage = `/public/images/${req.file.filename}`;
+    }
+
+    // Cập nhật danh mục với thông tin mới
+    await categoriesModel.updateCategory(id, updatedName, updatedImage);
+    res.json({ 
+      message: 'Cập nhật danh mục thành công',
+      category: {
+        id,
+        name: updatedName,
+        image: updatedImage
+      }
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -13,6 +13,8 @@ import { Picker } from "@react-native-picker/picker";
 import { useAuth } from "../context/AuthContext";
 import { BASE_URL } from "../constants/api";
 import * as ImagePicker from "expo-image-picker";
+import { ScrollView } from "react-native-gesture-handler";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const AddDishScreen = ({ route, navigation }) => {
   const { fetchWithAuth } = useAuth();
@@ -82,6 +84,7 @@ const AddDishScreen = ({ route, navigation }) => {
       });
 
       if (!result.canceled) {
+        console.log("Selected image:", result.assets[0]);
         setSelectedImage(result.assets[0]);
       }
     } catch (error) {
@@ -100,58 +103,46 @@ const AddDishScreen = ({ route, navigation }) => {
       const url = `${BASE_URL}/api/dishes`;
       console.log("Đang thêm món ăn mới tại:", url);
 
+      // Chuẩn bị dữ liệu cơ bản
       const formData = new FormData();
-      formData.append("categoryId", categoryId);
-      formData.append("name", name.trim());
-      formData.append("description", description ? description.trim() : "");
-      formData.append("price", price);
+      formData.append('categoryId', categoryId);
+      formData.append('name', name);
+      formData.append('description', description || '');
+      formData.append('price', price);
 
+      // Xử lý file ảnh
       if (selectedImage) {
-        const imageUri = selectedImage.uri;
-        const filename = imageUri.split("/").pop();
+        const localUri = selectedImage.uri;
+        const filename = localUri.split('/').pop();
 
-        // Đảm bảo type luôn được set đúng
-        let type = "image/jpeg";
-        if (filename) {
-          const match = /\.(\w+)$/.exec(filename);
-          if (match) type = `image/${match[1].toLowerCase()}`;
-        }
-
-        // Xử lý URI cho cả Android và iOS
-        const finalUri =
-          Platform.OS === "ios" ? imageUri.replace("file://", "") : imageUri;
-
-        formData.append("image", {
-          uri: finalUri,
-          type: type,
-          name: filename || `image_${Date.now()}.jpg`,
+        // Tạo file object từ uri
+        formData.append('image', {
+          uri: Platform.OS === 'android' ? localUri : localUri.replace('file://', ''),
+          name: filename,
+          type: 'image/jpeg'
         });
       }
 
-      console.log("FormData:", {
+      // Log request details
+      console.log('Request URL:', url);
+      console.log('FormData:', {
         categoryId,
-        name: name.trim(),
-        description: description ? description.trim() : "",
+        name,
+        description: description || '',
         price,
         hasImage: !!selectedImage,
-        imageInfo: selectedImage
-          ? {
-              uri: selectedImage.uri,
-              type: selectedImage.type,
-              name: selectedImage.name,
-            }
-          : null,
+        imageUri: selectedImage?.uri
       });
 
+      // Gửi request với fetchWithAuth
       const response = await fetchWithAuth(url, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-        },
-        body: formData,
+        method: 'POST',
+        body: formData
       });
 
-      console.log("Trạng thái phản hồi thêm món:", response.status);
+      const responseData = await response.json();
+      console.log('Response:', responseData);
+
       if (response.ok) {
         Alert.alert("Thành công", "Thêm món ăn mới thành công");
         if (onUpdate) {
@@ -159,22 +150,16 @@ const AddDishScreen = ({ route, navigation }) => {
         }
         navigation.goBack();
       } else {
-        const result = await response.json();
-        console.log("Lỗi khi thêm món:", result);
-        Alert.alert("Lỗi", result.error || "Không thể thêm món ăn mới");
+        throw new Error(responseData.error || 'Không thể thêm món ăn mới');
       }
     } catch (err) {
       console.error("Chi tiết lỗi khi thêm món:", err);
-      if (err.message.includes("Network request failed")) {
-        Alert.alert("Lỗi kết nối", "Không thể kết nối tới server.");
-      } else {
-        Alert.alert("Lỗi", "Có lỗi xảy ra: " + err.message);
-      }
+      Alert.alert("Lỗi", err.message || "Có lỗi xảy ra khi thêm món ăn");
     }
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <Text style={styles.title}>Thêm món ăn mới</Text>
       <TextInput
         style={styles.input}
@@ -228,7 +213,7 @@ const AddDishScreen = ({ route, navigation }) => {
       <TouchableOpacity style={styles.button} onPress={handleAddDish}>
         <Text style={styles.buttonText}>Thêm món ăn</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 };
 

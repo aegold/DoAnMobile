@@ -18,6 +18,8 @@ import EditDishScreen from "../screens/EditDishScreen";
 import OrderListScreen from "../screens/OrderListScreen";
 import OrderDetailScreen from "../screens/OrderDetailScreen";
 import AdminOrderDetailScreen from "../screens/AdminOrderDetailScreen";
+import FoodDetailScreen from '../screens/FoodDetailScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -27,7 +29,6 @@ const MenuStack = () => (
     <Stack.Screen name="MenuList" component={MenuScreen} />
     <Stack.Screen
       name="DishList"
-
       component={DishScreen}
       options={({ route }) => ({
         headerShown: false,
@@ -37,7 +38,12 @@ const MenuStack = () => (
         headerTitleStyle: { fontWeight: "bold" },
       })}
     />
-  </Stack.Navigator>
+    <Stack.Screen
+        name="FoodDetail"
+        component={FoodDetailScreen}
+        options={{ headerShown: false }}
+    />
+      </Stack.Navigator>
 );
 
 const HomeStack = () => (
@@ -60,6 +66,17 @@ const HomeStack = () => (
 const SettingStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="SettingMain" component={SettingScreen} />
+    <Stack.Screen
+      name="Profile"
+      component={ProfileScreen}
+      options={{
+        headerShown: false,
+        title: "Thông tin cá nhân",
+        headerStyle: { backgroundColor: "#e91e63" },
+        headerTintColor: "#fff",
+        headerTitleStyle: { fontWeight: "bold" },
+      }}
+    />
     <Stack.Screen
       name="Admin"
       component={AdminScreen}
