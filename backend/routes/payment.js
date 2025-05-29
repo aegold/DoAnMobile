@@ -103,6 +103,16 @@ router.get('/vnpay_return', function (req, res, next) {
             vnp_TransactionStatus
         } = req.query;
 
+        // Format số tiền
+        const amount = parseInt(vnp_Amount) / 100; // Chuyển về VND
+        const formattedAmount = new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND'
+        }).format(amount);
+
+        // Format thời gian
+        const paymentDate = moment(vnp_PayDate, 'YYYYMMDDHHmmss').format('DD/MM/YYYY HH:mm:ss');
+
         // Tạo deep link với đầy đủ thông tin
         const appDeepLink = `foodie://payment/vnpay?amount=${vnp_Amount}&bankCode=${vnp_BankCode}&orderInfo=${encodeURIComponent(vnp_OrderInfo)}&payDate=${vnp_PayDate}&responseCode=${vnp_ResponseCode}&transactionStatus=${vnp_TransactionStatus}`;
         
@@ -146,12 +156,39 @@ router.get('/vnpay_return', function (req, res, next) {
                             color: #28a745;
                             margin-bottom: 20px;
                         }
+                        .payment-details {
+                            margin: 20px 0;
+                            text-align: left;
+                            background-color: #f8f9fa;
+                            padding: 15px;
+                            border-radius: 8px;
+                        }
+                        .payment-details p {
+                            margin: 8px 0;
+                            display: flex;
+                            justify-content: space-between;
+                        }
+                        .payment-details strong {
+                            color: #495057;
+                        }
+                        .payment-details .amount {
+                            color: #28a745;
+                            font-weight: bold;
+                        }
                     </style>
                 </head>
                 <body>
                     <div class="message">
                         <div class="icon">✓</div>
                         <h2>Thanh toán thành công!</h2>
+                        
+                        <div class="payment-details">
+                            <p><strong>Số tiền:</strong> <span class="amount">${formattedAmount}</span></p>
+                            <p><strong>Ngân hàng:</strong> <span>${vnp_BankCode}</span></p>
+                            <p><strong>Thời gian:</strong> <span>${paymentDate}</span></p>
+                            <p><strong>Nội dung:</strong> <span>${vnp_OrderInfo}</span></p>
+                        </div>
+
                         <div class="instructions">
                             <p><strong>Hướng dẫn:</strong></p>
                             <p>1. Vuốt xuống từ đầu màn hình để hiện thanh điều hướng Chrome</p>
