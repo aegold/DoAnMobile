@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -12,51 +12,80 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { BASE_URL, API_ENDPOINTS } from '../constants/api';
 import { useAuth } from '../context/AuthContext';
+import CustomAlert from '../components/customAlert'; // Import CustomAlert
 
 const UserOrderDetailScreen = ({ navigation, route }) => {
   const { order } = route.params;
   const { fetchWithAuth } = useAuth();
 
-  const handleCancelOrder = async () => {
-    Alert.alert(
-      'Xác nhận hủy đơn',
-      'Bạn có chắc chắn muốn hủy đơn hàng này không?',
-      [
-        {
-          text: 'Không',
-          style: 'cancel',
-        },
-        {
-          text: 'Có',
-          onPress: async () => {
-            try {
-              const response = await fetchWithAuth(API_ENDPOINTS.CANCEL_ORDER(order.id), {
-                method: 'PUT',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-              });
+  // State for CustomAlert
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertType, setAlertType] = useState(''); // 'CONFIRM', 'SUCCESS', 'ERROR'
 
-              const data = await response.json();
-              
-              if (response.ok) {
-                Alert.alert('Thành công', data.message, [
-                  {
-                    text: 'OK',
-                    onPress: () => navigation.goBack(),
-                  },
-                ]);
-              } else {
-                Alert.alert('Lỗi', data.error || 'Không thể hủy đơn hàng');
-              }
-            } catch (error) {
-              console.error('Error canceling order:', error);
-              Alert.alert('Lỗi', 'Có lỗi xảy ra khi hủy đơn hàng');
-            }
-          },
+  const handleCancelOrder = async () => {
+    // Show confirmation alert
+    setAlertTitle('Xác nhận hủy đơn');
+    setAlertMessage('Bạn có chắc chắn muốn hủy đơn hàng này không?');
+    setAlertType('CONFIRM');
+    setAlertVisible(true);
+  };
+
+  const confirmCancelOrder = async () => {
+    setAlertVisible(false);
+    
+    try {
+      const response = await fetchWithAuth(API_ENDPOINTS.CANCEL_ORDER(order.id), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      ],
-    );
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        // Show success alert
+        setAlertTitle('Thành công');
+        setAlertMessage(data.message);
+        setAlertType('SUCCESS');
+        setAlertVisible(true);
+      } else {
+        // Show error alert
+        setAlertTitle('Lỗi');
+        setAlertMessage(data.error || 'Không thể hủy đơn hàng');
+        setAlertType('ERROR');
+        setAlertVisible(true);
+      }
+    } catch (error) {
+      console.error('Error canceling order:', error);
+      
+      // Show error alert
+      setAlertTitle('Lỗi');
+      setAlertMessage('Có lỗi xảy ra khi hủy đơn hàng');
+      setAlertType('ERROR');
+      setAlertVisible(true);
+    }
+  };
+
+  const handleAlertClose = () => {
+    setAlertVisible(false);
+    
+    // Navigate back if it was a success alert
+    if (alertType === 'SUCCESS') {
+      navigation.goBack();
+    }
+    
+    setAlertType('');
+  };
+
+  const handleAlertConfirm = () => {
+    if (alertType === 'CONFIRM') {
+      confirmCancelOrder();
+    } else {
+      handleAlertClose();
+    }
   };
 
   return (
@@ -150,6 +179,15 @@ const UserOrderDetailScreen = ({ navigation, route }) => {
           </Text>
         </View>
       </ScrollView>
+
+      {/* Custom Alert */}
+      <CustomAlert
+        visible={alertVisible}
+        onClose={handleAlertClose}
+        title={alertTitle}
+        message={alertMessage}
+        onConfirm={handleAlertConfirm}
+      />
     </SafeAreaView>
   );
 };
@@ -302,4 +340,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default UserOrderDetailScreen; 
+export default UserOrderDetailScreen;
