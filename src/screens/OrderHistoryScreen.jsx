@@ -13,6 +13,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { API_ENDPOINTS, BASE_URL } from '../constants/api';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+
 import { useFonts, Sen_400Regular, Sen_700Bold } from '@expo-google-fonts/sen';
 
 const OrderHistoryScreen = ({ navigation }) => {
@@ -20,12 +22,21 @@ const OrderHistoryScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState('Đang xử lý');
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [isDatePickerVisible, setDatePickerVisible] = useState(false);
+
+  const showDatePicker = () => setDatePickerVisible(true);
+  const hideDatePicker = () => setDatePickerVisible(false);
   const { fetchWithAuth, user } = useAuth();
 
   const [fontsLoaded] = useFonts({
     Sen_400Regular,
     Sen_700Bold,
   });
+  const handleConfirmDate = (date) => {
+    setSelectedDate(date);
+    hideDatePicker();
+  };
 
   const fetchOrders = async () => {
     try {
@@ -51,7 +62,15 @@ const OrderHistoryScreen = ({ navigation }) => {
     fetchOrders();
   }, []);
 
-  const filteredOrders = orders.filter(order => order.status === selectedStatus);
+  const filteredOrders = orders.filter(order => {
+    const orderDate = new Date(order.created_at);
+    const isSameDay =
+      orderDate.getDate() === selectedDate.getDate() &&
+      orderDate.getMonth() === selectedDate.getMonth() &&
+      orderDate.getFullYear() === selectedDate.getFullYear();
+
+    return order.status === selectedStatus && isSameDay;
+  });
 
   const getStatusColor = (status) => {
     return status === 'Đang xử lý' ? '#FF9800' : status === 'Đã xác nhận' ? '#4CAF50' : '#E60023';
@@ -70,9 +89,7 @@ const OrderHistoryScreen = ({ navigation }) => {
           <Text style={styles.orderId}>Đơn hàng #{item.id}</Text>
           <Text style={[
             styles.orderStatus,
-            { 
-              color: getStatusColor(item.status)
-            }
+            { color: getStatusColor(item.status) }
           ]}>
             {item.status}
           </Text>
@@ -131,7 +148,7 @@ const OrderHistoryScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
@@ -141,6 +158,7 @@ const OrderHistoryScreen = ({ navigation }) => {
         <View style={styles.rightHeader} />
       </View>
 
+      {/* Status Tabs */}
       <View style={styles.statusTabs}>
         {['Đang xử lý', 'Đã xác nhận', 'Đã hủy'].map((status) => (
           <TouchableOpacity
@@ -161,6 +179,17 @@ const OrderHistoryScreen = ({ navigation }) => {
         ))}
       </View>
 
+      {/* Date Filter */}
+      <View style={styles.dateFilter}>
+        <Text style={styles.dateLabel}>Ngày:</Text>
+        <TouchableOpacity style={styles.dateButton} onPress={showDatePicker}>
+          <Text style={styles.dateText}>
+            {selectedDate.toLocaleDateString("vi-VN")}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Orders List */}
       <FlatList
         data={filteredOrders}
         renderItem={renderOrderItem}
@@ -171,7 +200,16 @@ const OrderHistoryScreen = ({ navigation }) => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       />
+      <DateTimePickerModal
+  isVisible={isDatePickerVisible}
+  mode="date"
+  onConfirm={handleConfirmDate}
+  onCancel={hideDatePicker}
+  date={selectedDate}
+  maximumDate={new Date()}
+/>
     </SafeAreaView>
+    
   );
 };
 
@@ -182,7 +220,6 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 16,
-  
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -194,7 +231,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   rightHeader: {
-    width: 40, // Để cân bằng với backButton
+    width: 40,
   },
   title: {
     fontSize: 20,
@@ -227,6 +264,30 @@ const styles = StyleSheet.create({
   selectedTabText: {
     color: '#fff',
     fontFamily: 'Sen_700Bold',
+  },
+  dateFilter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  dateLabel: {
+    fontSize: 14,
+    color: "#000",
+    fontFamily: "Sen_700Bold",
+    marginRight: 8,
+  },
+  dateButton: {
+    backgroundColor: "#f5f5f5",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  dateText: {
+    fontSize: 14,
+    fontFamily: "Sen_400Regular",
+    color: "#000",
   },
   listContainer: {
     padding: 16,
@@ -321,4 +382,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default OrderHistoryScreen; 
+export default OrderHistoryScreen;

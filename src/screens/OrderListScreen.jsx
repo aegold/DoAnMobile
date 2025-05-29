@@ -12,12 +12,27 @@ import { useAuth } from "../context/AuthContext";
 import { API_ENDPOINTS } from "../constants/api";
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import XLSX from "xlsx";
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
 
 const OrderListScreen = ({ navigation }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState('Đang xử lý');
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [isDatePickerVisible, setDatePickerVisible] = useState(false);
+
   const { fetchWithAuth } = useAuth();
+
+  const showDatePicker = () => setDatePickerVisible(true);
+  const hideDatePicker = () => setDatePickerVisible(false);
+  const handleConfirmDate = (date) => {
+    setSelectedDate(date);
+    hideDatePicker();
+  };
+
 
   const fetchOrders = async () => {
     try {
@@ -56,7 +71,43 @@ const OrderListScreen = ({ navigation }) => {
     }
   };
 
-  const filteredOrders = orders.filter(order => order.status === selectedStatus);
+  const filteredOrders = orders.filter(order => {
+    const orderDate = new Date(order.created_at);
+    const isSameDay =
+      orderDate.getDate() === selectedDate.getDate() &&
+      orderDate.getMonth() === selectedDate.getMonth() &&
+      orderDate.getFullYear() === selectedDate.getFullYear();
+
+    return order.status === selectedStatus && isSameDay;
+  });
+  const exportToExcel = async () => {
+    try {
+      const exportData = orders.map((item) => ({
+        "ID": item.id,
+        "Ngày đặt": new Date(item.created_at).toLocaleDateString("vi-VN"),
+        "Khách hàng": item.user_name,
+        "Trạng thái": item.status,
+        "Tổng tiền": item.total.toLocaleString("vi-VN") + " VNĐ",
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Đơn hàng");
+
+      const excelBinary = XLSX.write(workbook, { type: "base64", bookType: "xlsx" });
+
+      const fileUri = FileSystem.documentDirectory + "donhang.xlsx";
+
+      await FileSystem.writeAsStringAsync(fileUri, excelBinary, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      await Sharing.shareAsync(fileUri);
+    } catch (error) {
+      console.error("Lỗi xuất Excel:", error);
+      Alert.alert("Lỗi", "Không thể xuất file Excel");
+    }
+  };
 
   const renderOrderItem = ({ item }) => (
     <TouchableOpacity
@@ -76,6 +127,7 @@ const OrderListScreen = ({ navigation }) => {
           <Text style={styles.value}>
             {new Date(item.created_at).toLocaleDateString('vi-VN')}
           </Text>
+          
         </View>
         <View style={styles.infoRow}>
           <Text style={styles.label}>Khách hàng:</Text>
@@ -105,15 +157,15 @@ const OrderListScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-      <TouchableOpacity 
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}
-      >
-        <Ionicons name="chevron-back" size={24} color="black" />
-      </TouchableOpacity>
-      <Text style={styles.headerTitle}>Quản lý đơn hàng</Text>
-      <View style={{ width: 40 }} />
-    </View>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="chevron-back" size={24} color="black" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Quản lý đơn hàng</Text>
+        <View style={{ width: 40 }} />
+      </View>
 
       <View style={styles.statusTabs}>
         {['Đang xử lý', 'Đã xác nhận', 'Đã hủy'].map((status) => (
@@ -134,12 +186,26 @@ const OrderListScreen = ({ navigation }) => {
           </TouchableOpacity>
         ))}
       </View>
+      <View style={styles.Filter}>
+      <View style={styles.dateFilter}>
+        <Text style={styles.dateLabel}>Ngày:</Text>
+        <TouchableOpacity style={styles.dateButton} onPress={showDatePicker}>
+          <Text style={styles.dateText}>
+            {selectedDate.toLocaleDateString("vi-VN")}
+          </Text>
+        </TouchableOpacity>
+      </View>
+      <TouchableOpacity style={styles.exportButton} onPress={exportToExcel}>
+            <Text style={styles.exportText}>Xuất Excel</Text>
+          </TouchableOpacity>
+      </View>
+      
 
       {filteredOrders.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="receipt-outline" size={64} color="#ccc" />
           <Text style={styles.emptyText}>
-            Không có đơn hàng nào ở trạng thái {selectedStatus.toLowerCase()}
+            Không có đơn hàng nào ở trạng thái {selectedStatus.toLowerCase()} ngày này.
           </Text>
         </View>
       ) : (
@@ -150,6 +216,15 @@ const OrderListScreen = ({ navigation }) => {
           contentContainerStyle={styles.listContainer}
         />
       )}
+
+      <DateTimePickerModal
+        isVisible={isDatePickerVisible}
+        mode="date"
+        onConfirm={handleConfirmDate}
+        onCancel={hideDatePicker}
+        date={selectedDate}
+        maximumDate={new Date()}
+      />
     </SafeAreaView>
   );
 };
@@ -171,13 +246,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: "#fff",
-   
   },
   headerTitle: {
     fontSize: 25,
     fontWeight: "600",
     color: "#000",
     fontFamily: "Inter_700Bold",
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   statusTabs: {
     flexDirection: 'row',
@@ -203,6 +283,29 @@ const styles = StyleSheet.create({
   selectedTabText: {
     color: '#fff',
     fontFamily: 'Sen_700Bold',
+  },
+  dateFilter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  dateLabel: {
+    fontSize: 14,
+    color: "#000",
+    fontWeight: 'bold',
+    marginRight: 8,
+  },
+  dateButton: {
+    backgroundColor: "#f0f0f0",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  dateText: {
+    fontSize: 14,
+    color: "#000",
   },
   listContainer: {
     padding: 16,
@@ -274,6 +377,24 @@ const styles = StyleSheet.create({
     fontFamily: 'Sen_400Regular',
     textAlign: 'center',
   },
+  exportButton: {
+  backgroundColor: "#E60023",
+  padding: 12,
+  borderRadius: 8,
+  marginHorizontal: 16,
+  marginBottom: 8,
+  alignItems: "center",
+},
+exportText: {
+  color: "#fff",
+  fontSize: 14,
+  fontWeight: "bold",
+},
+Filter:{
+  flexDirection:"row",
+  justifyContent:"space-between"
+}
+
 });
 
 export default OrderListScreen;
