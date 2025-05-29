@@ -146,9 +146,7 @@ const ProfileScreen = ({ navigation }) => {
             }}
             style={styles.avatar}
           />
-          <TouchableOpacity style={styles.editAvatarButton}>
-            <Ionicons name="camera" size={20} color="#fff" />
-          </TouchableOpacity>
+          
         </View>
       </View>
 

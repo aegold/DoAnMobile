@@ -183,17 +183,21 @@ const HomeScreen = ({ navigation }) => {
         keyExtractor={(item) => item.id.toString()}
         ListHeaderComponent={
           <>
-            <Swiper
-              style={[styles.swiper, { height: imageHeight }]}
-              autoplay
-              loop
-              autoplayTimeout={3}
-              showsPagination={true}
-              dotStyle={styles.dot}
-              activeDotStyle={styles.activeDot}
-            >
-              {categories.map(category => renderCategorySlide(category))}
-            </Swiper>
+             <Swiper
+        style={[styles.swiper, { height: imageHeight + 20 }]}
+        autoplay
+        loop
+      >
+        <View style={styles.slide}>
+          <Image source={img1} style={styles.image} resizeMode="cover" />
+        </View>
+        <View style={styles.slide}>
+          <Image source={img2} style={styles.image} resizeMode="cover" />
+        </View>
+        <View style={styles.slide}>
+          <Image source={img3} style={styles.image} resizeMode="cover" />
+        </View>
+      </Swiper>
             <Text style={styles.comboTitle}>COMBO</Text>
           </>
         }

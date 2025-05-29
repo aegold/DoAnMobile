@@ -44,7 +44,7 @@ const CartScreen = ({ navigation }) => {
         <View style={styles.cartHeader}>
           <View style={styles.cartTitleContainer}>
             <Text style={styles.cartName}>{item.name}</Text>
-            <Text style={styles.cartCategory}>Pizza</Text>
+            
           </View>
           <TouchableOpacity
             style={styles.removeButton}

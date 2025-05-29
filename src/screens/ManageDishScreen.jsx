@@ -17,6 +17,8 @@ import CustomAlert from "../components/customAlert";
 const ManageDishesScreen = ({ navigation }) => {
   const { user, fetchWithAuth } = useAuth();
   const [dishes, setDishes] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [alertConfig, setAlertConfig] = useState({
     visible: false,
@@ -49,6 +51,7 @@ const ManageDishesScreen = ({ navigation }) => {
       return;
     }
 
+    fetchCategories();
     fetchDishes();
   }, [user, navigation]);
 
@@ -76,6 +79,26 @@ const ManageDishesScreen = ({ navigation }) => {
       );
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetchWithAuth(`${BASE_URL}/api/categories`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data);
+      } else {
+        console.log("Không thể lấy danh mục");
+      }
+    } catch (error) {
+      console.error("Lỗi khi lấy danh mục:", error);
     }
   };
 
@@ -110,6 +133,10 @@ const ManageDishesScreen = ({ navigation }) => {
       }
     );
   };
+
+  const filteredDishes = selectedCategory
+    ? dishes.filter(d => d.category_id == selectedCategory)
+    : dishes;
 
   const renderDishItem = ({ item }) => (
     <View style={styles.dishItem}>
@@ -166,8 +193,35 @@ const ManageDishesScreen = ({ navigation }) => {
         <Text style={styles.headerTitle}>Quản lý món ăn</Text>
         <View style={styles.headerRight} />
       </View>
+
+      {/* Category Filter */}
       <FlatList
-        data={dishes}
+        horizontal
+        data={[{ id: "", name: "Tất cả" }, ...categories]}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={[
+              styles.categoryItem,
+              item.id == selectedCategory && styles.categoryItemSelected,
+            ]}
+            onPress={() => setSelectedCategory(item.id)}
+          >
+            <Text
+              style={[
+                styles.categoryText,
+                item.id == selectedCategory && styles.categoryTextSelected,
+              ]}
+            >
+              {item.name}
+            </Text>
+          </TouchableOpacity>
+        )}
+        contentContainerStyle={styles.categoryList}
+      />
+
+      <FlatList
+        data={filteredDishes}
         renderItem={renderDishItem}
         keyExtractor={(item) => item.id.toString()}
         ListEmptyComponent={
@@ -175,6 +229,7 @@ const ManageDishesScreen = ({ navigation }) => {
         }
         contentContainerStyle={styles.listContainer}
       />
+      
       <TouchableOpacity
         style={styles.addButton}
         onPress={() => navigation.navigate("AddDish", { onUpdate: fetchDishes })}
@@ -303,6 +358,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
     marginTop: 20,
+  },
+  categoryList: {
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+    
+  },
+  categoryItem: {
+    backgroundColor: "#f0f0f0",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    marginRight: 8,
+    height:35
+  },
+  categoryItemSelected: {
+    backgroundColor: "#E31837",
+  },
+  categoryText: {
+    fontSize: 14,
+    color: "#000",
+  },
+  categoryTextSelected: {
+    color: "#fff",
+    fontWeight: "bold",
   },
 });
 
