@@ -164,16 +164,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
   },
   backButton: {
     padding: 8,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 30,
     fontWeight: 'bold',
     color: '#000',
+    fontFamily: "Sen_700Bold",
+
   },
   content: {
     flex: 1,

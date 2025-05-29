@@ -105,8 +105,15 @@ const OrderListScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Quản lý đơn hàng</Text>
-      </View>
+      <TouchableOpacity 
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+      >
+        <Ionicons name="chevron-back" size={24} color="black" />
+      </TouchableOpacity>
+      <Text style={styles.headerTitle}>Quản lý đơn hàng</Text>
+      <View style={{ width: 40 }} />
+    </View>
 
       <View style={styles.statusTabs}>
         {['Đang xử lý', 'Đã xác nhận', 'Đã hủy'].map((status) => (
@@ -158,15 +165,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
-    padding: 16,
-    backgroundColor: '#E60023',
-    elevation: 4,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#fff",
+   
   },
-  title: {
-    fontSize: 20,
-    fontFamily: 'Sen_700Bold',
-    color: '#fff',
-    textAlign: 'center',
+  headerTitle: {
+    fontSize: 25,
+    fontWeight: "600",
+    color: "#000",
+    fontFamily: "Inter_700Bold",
   },
   statusTabs: {
     flexDirection: 'row',

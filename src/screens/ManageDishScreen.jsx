@@ -5,7 +5,6 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   Image,
   ActivityIndicator,
   SafeAreaView,
@@ -13,16 +12,40 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { API_ENDPOINTS, BASE_URL } from "../constants/api";
 import { Ionicons } from "@expo/vector-icons";
+import CustomAlert from "../components/customAlert";
 
 const ManageDishesScreen = ({ navigation }) => {
   const { user, fetchWithAuth } = useAuth();
   const [dishes, setDishes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
+
+  const showAlert = (title, message, onConfirm = () => {}) => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      onConfirm,
+    });
+  };
+
+  const hideAlert = () => {
+    setAlertConfig({
+      ...alertConfig,
+      visible: false,
+    });
+  };
 
   useEffect(() => {
     if (user?.role !== "admin") {
-      Alert.alert("Lỗi", "Chỉ admin mới được truy cập màn hình này");
-      navigation.goBack();
+      showAlert("Lỗi", "Chỉ admin mới được truy cập màn hình này", () => {
+        navigation.goBack();
+      });
       return;
     }
 
@@ -47,7 +70,7 @@ const ManageDishesScreen = ({ navigation }) => {
       setDishes(data);
     } catch (error) {
       console.error("Lỗi khi tải danh sách món ăn:", error);
-      Alert.alert(
+      showAlert(
         "Lỗi",
         "Không thể tải danh sách món ăn. Vui lòng thử lại sau."
       );
@@ -57,43 +80,34 @@ const ManageDishesScreen = ({ navigation }) => {
   };
 
   const handleDeleteDish = async (dishId) => {
-    Alert.alert(
+    showAlert(
       "Xác nhận",
-      "Bạn có chắc chắn muốn xóa món ăn này không?",
-      [
-        {
-          text: "Hủy",
-          style: "cancel"
-        },
-        {
-          text: "Xóa",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const response = await fetchWithAuth(`${BASE_URL}/api/dishes/${dishId}`, {
-                method: "DELETE",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-              });
+      "Bạn có chắc chắn muốn ẩn món ăn này không?",
+      async () => {
+        try {
+          const response = await fetchWithAuth(`${BASE_URL}/api/dishes/${dishId}/status`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
 
-              if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Không thể xóa món ăn');
-              }
-
-              Alert.alert("Thành công", "Xóa món ăn thành công");
-              fetchDishes();
-            } catch (error) {
-              console.error("Lỗi khi xóa món ăn:", error);
-              Alert.alert(
-                "Lỗi",
-                "Không thể xóa món ăn. Vui lòng thử lại sau."
-              );
-            }
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Không thể ẩn món ăn');
           }
+
+          showAlert("Thành công", "Đã ẩn món ăn thành công", () => {
+            fetchDishes();
+          });
+        } catch (error) {
+          console.error("Lỗi khi ẩn món ăn:", error);
+          showAlert(
+            "Lỗi",
+            "Không thể ẩn món ăn. Vui lòng thử lại sau."
+          );
         }
-      ]
+      }
     );
   };
 
@@ -114,12 +128,6 @@ const ManageDishesScreen = ({ navigation }) => {
       </View>
       <View style={styles.actionButtons}>
         <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => handleDeleteDish(item.id)}
-        >
-          <Ionicons name="trash-outline" size={20} color="#E31837" />
-        </TouchableOpacity>
-        <TouchableOpacity
           style={styles.editButton}
           onPress={() => navigation.navigate("EditDish", {
             dish: item,
@@ -127,6 +135,12 @@ const ManageDishesScreen = ({ navigation }) => {
           })}
         >
           <Text style={styles.editButtonText}>Sửa</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => handleDeleteDish(item.id)}
+        >
+          <Ionicons name="trash-outline" size={20} color="#E31837" />
         </TouchableOpacity>
       </View>
     </View>
@@ -143,7 +157,14 @@ const ManageDishesScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="chevron-back" size={24} color="#000" />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Quản lý món ăn</Text>
+        <View style={styles.headerRight} />
       </View>
       <FlatList
         data={dishes}
@@ -160,6 +181,17 @@ const ManageDishesScreen = ({ navigation }) => {
       >
         <Text style={styles.addButtonText}>Thêm món</Text>
       </TouchableOpacity>
+
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        onClose={hideAlert}
+        onConfirm={() => {
+          alertConfig.onConfirm();
+          hideAlert();
+        }}
+      />
     </SafeAreaView>
   );
 };
@@ -176,16 +208,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   header: {
-    height: 60,
-    justifyContent: "center",
+    flexDirection: "row",
     alignItems: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E5E5",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 30,
     fontWeight: "600",
     color: "#000",
+    fontFamily: "Sen_700Bold",
+    textAlign: "center",
   },
   listContainer: {
     padding: 16,

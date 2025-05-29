@@ -28,11 +28,11 @@ const getCategoryById = (id) => {
   });
 };
 
-const createCategory = (name, image) => {
+const createCategory = (name, image, status = 'active') => {
   return new Promise((resolve, reject) => {
     db.run(
-      'INSERT INTO Categories (name, image) VALUES (?, ?)',
-      [name, image],
+      'INSERT INTO Categories (name, image, status) VALUES (?, ?, ?)',
+      [name, image, status],
       function (err) {
         if (err) reject(err);
         else resolve(this.lastID);
@@ -41,11 +41,21 @@ const createCategory = (name, image) => {
   });
 };
 
-const updateCategory = (id, name, image) => {
+const updateCategory = (id, name, image, status) => {
   return new Promise((resolve, reject) => {
     db.run(
-      'UPDATE Categories SET name = ?, image = ? WHERE id = ?',
-      [name, image, id],
+      'UPDATE Categories SET name = ?, image = ?, status = ? WHERE id = ?',
+      [name, image, status, id],
+      (err) => (err ? reject(err) : resolve())
+    );
+  });
+};
+
+const updateCategoryStatus = (id, status) => {
+  return new Promise((resolve, reject) => {
+    db.run(
+      'UPDATE Categories SET status = ? WHERE id = ?',
+      [status, id],
       (err) => (err ? reject(err) : resolve())
     );
   });
@@ -62,5 +72,6 @@ module.exports = {
   getCategoryById,
   createCategory,
   updateCategory,
+  updateCategoryStatus,
   deleteCategory,
 };

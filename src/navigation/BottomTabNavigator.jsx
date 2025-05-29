@@ -53,7 +53,7 @@ const HomeStack = () => (
       name="SearchResults"
       component={SearchResultsScreen}
       options={{
-        headerShown: true,
+        headerShown: false,
         title: "Kết quả tìm kiếm",
         headerStyle: { backgroundColor: "#e91e63" },
         headerTintColor: "#fff",
@@ -81,7 +81,7 @@ const SettingStack = () => (
       name="Admin"
       component={AdminScreen}
       options={{
-        headerShown: true,
+        headerShown: false,
         title: "Quản lý",
         headerStyle: { backgroundColor: "#e91e63" },
         headerTintColor: "#fff",
@@ -92,7 +92,7 @@ const SettingStack = () => (
       name="Categories"
       component={CategoriesScreen}
       options={{
-        headerShown: true,
+        headerShown: false,
         title: "Quản lý danh mục",
         headerStyle: { backgroundColor: "#e91e63" },
         headerTintColor: "#fff",
@@ -103,7 +103,7 @@ const SettingStack = () => (
       name="ManageDishes"
       component={ManageDishScreen}
       options={{
-        headerShown: true,
+        headerShown: false,
         title: "Quản lý món ăn",
         headerStyle: { backgroundColor: "#e91e63" },
         headerTintColor: "#fff",
@@ -114,7 +114,7 @@ const SettingStack = () => (
       name="AddDish"
       component={AddDishScreen}
       options={{
-        headerShown: true,
+        headerShown: false,
         title: "Thêm món ăn",
         headerStyle: { backgroundColor: "#e91e63" },
         headerTintColor: "#fff",
@@ -125,7 +125,7 @@ const SettingStack = () => (
       name="EditDish"
       component={EditDishScreen}
       options={{
-        headerShown: true,
+        headerShown: false,
         title: "Chỉnh sửa món ăn",
         headerStyle: { backgroundColor: "#e91e63" },
         headerTintColor: "#fff",
@@ -136,7 +136,7 @@ const SettingStack = () => (
       name="OrderList"
       component={OrderListScreen}
       options={{
-        headerShown: true,
+        headerShown: false,
         title: "Danh sách đơn hàng",
         headerStyle: { backgroundColor: "#e91e63" },
         headerTintColor: "#fff",

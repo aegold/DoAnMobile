@@ -7,12 +7,12 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
-  Alert
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import { BASE_URL, API_ENDPOINTS } from '../constants/api';
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import CustomAlert from "../components/customAlert";
 
 const ProfileScreen = ({ navigation }) => {
   const { user, fetchWithAuth, updateUserData } = useAuth();
@@ -22,6 +22,28 @@ const ProfileScreen = ({ navigation }) => {
     phone: '',
     address: ''
   });
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
+
+  const showAlert = (title, message, onConfirm = () => {}) => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      onConfirm,
+    });
+  };
+
+  const hideAlert = () => {
+    setAlertConfig({
+      ...alertConfig,
+      visible: false,
+    });
+  };
 
   useEffect(() => {
     if (!user) {
@@ -40,8 +62,9 @@ const ProfileScreen = ({ navigation }) => {
   const handleSave = async () => {
     try {
       if (!user) {
-        Alert.alert('Lỗi', 'Vui lòng đăng nhập để tiếp tục');
-        navigation.replace('Login');
+        showAlert('Lỗi', 'Vui lòng đăng nhập để tiếp tục', () => {
+          navigation.replace('Login');
+        });
         return;
       }
 
@@ -50,13 +73,13 @@ const ProfileScreen = ({ navigation }) => {
       // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
-        Alert.alert('Lỗi', 'Email không hợp lệ');
+        showAlert('Lỗi', 'Email không hợp lệ');
         return;
       }
 
       // Validate phone format if provided
       if (formData.phone && !/^\d{10}$/.test(formData.phone)) {
-        Alert.alert('Lỗi', 'Số điện thoại phải có 10 chữ số');
+        showAlert('Lỗi', 'Số điện thoại phải có 10 chữ số');
         return;
       }
 
@@ -81,18 +104,15 @@ const ProfileScreen = ({ navigation }) => {
       // Update the user data in context and storage
       await updateUserData(data.user);
       
-      Alert.alert('Thành công', 'Cập nhật thông tin thành công', [
-        {
-          text: 'OK',
-          onPress: () => navigation.goBack()
-        }
-      ]);
+      showAlert('Thành công', 'Cập nhật thông tin thành công', () => {
+        navigation.goBack();
+      });
     } catch (error) {
       console.error('Error details:', {
         message: error.message,
         stack: error.stack
       });
-      Alert.alert('Lỗi', error.message || 'Có lỗi xảy ra khi cập nhật thông tin');
+      showAlert('Lỗi', error.message || 'Có lỗi xảy ra khi cập nhật thông tin');
     }
   };
 
@@ -181,6 +201,17 @@ const ProfileScreen = ({ navigation }) => {
           <Text style={styles.saveButtonText}>Lưu thay đổi</Text>
         </TouchableOpacity>
       </View>
+
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        onClose={hideAlert}
+        onConfirm={() => {
+          alertConfig.onConfirm();
+          hideAlert();
+        }}
+      />
     </ScrollView>
   );
 };

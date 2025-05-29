@@ -5,15 +5,18 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Alert,
   TextInput,
   Modal,
   Image,
   Platform,
+  SafeAreaView,
+  StatusBar,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { BASE_URL } from "../constants/api";
-import * as ImagePicker from "expo-image-picker";
+import * as DocumentPicker from 'expo-document-picker';
+import { Ionicons } from '@expo/vector-icons';
+import CustomAlert from "../components/customAlert";
 
 const CategoriesScreen = ({ navigation }) => {
   const { fetchWithAuth } = useAuth();
@@ -22,6 +25,28 @@ const CategoriesScreen = ({ navigation }) => {
   const [editingCategory, setEditingCategory] = useState(null);
   const [name, setName] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
+
+  const showAlert = (title, message, onConfirm = () => {}) => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      onConfirm,
+    });
+  };
+
+  const hideAlert = () => {
+    setAlertConfig({
+      ...alertConfig,
+      visible: false,
+    });
+  };
 
   useEffect(() => {
     fetchCategories();
@@ -34,45 +59,42 @@ const CategoriesScreen = ({ navigation }) => {
         const data = await response.json();
         setCategories(data);
       } else {
-        Alert.alert("Lỗi", "Không thể lấy danh sách danh mục");
+        showAlert("Lỗi", "Không thể lấy danh sách danh mục");
       }
     } catch (err) {
       console.error("Lỗi khi lấy danh mục:", err);
-      Alert.alert("Lỗi", "Có lỗi xảy ra khi lấy danh sách danh mục");
+      showAlert("Lỗi", "Có lỗi xảy ra khi lấy danh sách danh mục");
     }
   };
 
   const handleSelectImage = async () => {
     try {
-      const { status } =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(
-          "Cần quyền truy cập",
-          "Ứng dụng cần quyền truy cập vào thư viện ảnh"
-        );
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 0.8,
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'image/*',
+        copyToCacheDirectory: true,
+        multiple: false
       });
-
+  
       if (!result.canceled) {
-        setSelectedImage(result.assets[0]);
+        const file = result.assets[0];
+        setSelectedImage({
+          uri: file.uri,
+          name: file.name,
+          size: file.size,
+          mimeType: file.mimeType || 'image/jpeg',
+        });
+      } else {
+        console.log("Chọn ảnh bị hủy");
       }
     } catch (error) {
       console.error("Lỗi khi chọn ảnh:", error);
-      Alert.alert("Lỗi", "Không thể chọn ảnh");
+      showAlert("Lỗi", "Không thể chọn ảnh");
     }
   };
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert("Lỗi", "Vui lòng nhập tên danh mục");
+      showAlert("Lỗi", "Vui lòng nhập tên danh mục");
       return;
     }
 
@@ -134,44 +156,42 @@ const CategoriesScreen = ({ navigation }) => {
       await fetchCategories();
       setModalVisible(false);
       resetForm();
-      Alert.alert("Thành công", "Đã lưu danh mục thành công");
+      showAlert("Thành công", "Đã lưu danh mục thành công");
     } catch (err) {
       console.error("Chi tiết lỗi khi lưu danh mục:", err);
-      Alert.alert("Lỗi", err.message || "Có lỗi xảy ra khi lưu danh mục");
+      showAlert("Lỗi", err.message || "Có lỗi xảy ra khi lưu danh mục");
     }
   };
 
   const handleDelete = async (categoryId) => {
-    Alert.alert("Xác nhận", "Bạn có chắc chắn muốn xóa danh mục này?", [
-      {
-        text: "Hủy",
-        style: "cancel",
-      },
-      {
-        text: "Xóa",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            const response = await fetchWithAuth(
-              `${BASE_URL}/api/categories/${categoryId}`,
-              {
-                method: "DELETE",
-              }
-            );
-
-            if (response.ok) {
-              await fetchCategories();
-            } else {
-              const error = await response.json();
-              Alert.alert("Lỗi", error.error || "Không thể xóa danh mục");
+    showAlert(
+      "Xác nhận",
+      "Bạn có chắc chắn muốn ẩn danh mục này?",
+      async () => {
+        try {
+          const response = await fetchWithAuth(
+            `${BASE_URL}/api/categories/${categoryId}/status`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+              },
             }
-          } catch (err) {
-            console.error("Lỗi khi xóa danh mục:", err);
-            Alert.alert("Lỗi", "Có lỗi xảy ra khi xóa danh mục");
+          );
+
+          if (response.ok) {
+            await fetchCategories();
+            showAlert("Thành công", "Đã ẩn danh mục thành công");
+          } else {
+            const error = await response.json();
+            showAlert("Lỗi", error.error || "Không thể ẩn danh mục");
           }
-        },
-      },
-    ]);
+        } catch (err) {
+          console.error("Lỗi khi ẩn danh mục:", err);
+          showAlert("Lỗi", "Có lỗi xảy ra khi ẩn danh mục");
+        }
+      }
+    );
   };
 
   const resetForm = () => {
@@ -182,18 +202,18 @@ const CategoriesScreen = ({ navigation }) => {
 
   const renderCategoryItem = ({ item }) => (
     <View style={styles.categoryItem}>
-      <View style={styles.categoryInfo}>
-        {item.image && (
-          <Image
-            source={{ uri: `${BASE_URL}${item.image}` }}
-            style={styles.categoryImage}
-          />
-        )}
-        <Text style={styles.categoryName}>{item.name}</Text>
+      <View style={styles.categoryContent}>
+        <Image
+          source={{ uri: `${BASE_URL}${item.image}` }}
+          style={styles.categoryImage}
+        />
+        <View style={styles.categoryDetails}>
+          <Text style={styles.categoryName}>{item.name}</Text>
+        </View>
       </View>
       <View style={styles.categoryActions}>
         <TouchableOpacity
-          style={[styles.actionButton, styles.editButton]}
+          style={styles.editButton}
           onPress={() => {
             setEditingCategory(item);
             setName(item.name);
@@ -201,20 +221,32 @@ const CategoriesScreen = ({ navigation }) => {
             setModalVisible(true);
           }}
         >
-          <Text style={styles.actionButtonText}>Sửa</Text>
+          <Text style={styles.editButtonText}>Sửa</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.actionButton, styles.deleteButton]}
+          style={styles.deleteButton}
           onPress={() => handleDelete(item.id)}
         >
-          <Text style={styles.actionButtonText}>Xóa</Text>
+          <Ionicons name="trash-outline" size={20} color="#E60023" />
         </TouchableOpacity>
       </View>
     </View>
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="chevron-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Quản lý danh mục</Text>
+        <View style={styles.headerRight} />
+      </View>
+
       <FlatList
         data={categories}
         renderItem={renderCategoryItem}
@@ -229,7 +261,7 @@ const CategoriesScreen = ({ navigation }) => {
           setModalVisible(true);
         }}
       >
-        <Text style={styles.addButtonText}>Thêm danh mục mới</Text>
+        <Text style={styles.addButtonText}>Thêm món</Text>
       </TouchableOpacity>
 
       <Modal
@@ -244,7 +276,7 @@ const CategoriesScreen = ({ navigation }) => {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>
-              {editingCategory ? "Chỉnh sửa danh mục" : "Thêm danh mục mới"}
+              {editingCategory ? "Chỉnh sửa danh mục" : "Chỉnh sửa danh mục"}
             </Text>
             <TextInput
               style={styles.input}
@@ -252,20 +284,18 @@ const CategoriesScreen = ({ navigation }) => {
               value={name}
               onChangeText={setName}
             />
+            <TouchableOpacity
+              style={styles.imageButton}
+              onPress={handleSelectImage}
+            >
+              <Text style={styles.imageButtonText}>Chọn ảnh</Text>
+            </TouchableOpacity>
             {selectedImage && (
               <Image
                 source={{ uri: selectedImage.uri }}
                 style={styles.selectedImage}
               />
             )}
-            <TouchableOpacity
-              style={styles.imageButton}
-              onPress={handleSelectImage}
-            >
-              <Text style={styles.buttonText}>
-                {selectedImage ? "Thay đổi ảnh" : "Chọn ảnh"}
-              </Text>
-            </TouchableOpacity>
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
@@ -274,82 +304,127 @@ const CategoriesScreen = ({ navigation }) => {
                   resetForm();
                 }}
               >
-                <Text style={styles.buttonText}>Hủy</Text>
+                <Text style={styles.cancelButtonText}>Hủy</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, styles.saveButton]}
                 onPress={handleSave}
               >
-                <Text style={styles.buttonText}>Lưu</Text>
+                <Text style={styles.saveButtonText}>Lưu</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-    </View>
+
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        onClose={hideAlert}
+        onConfirm={() => {
+          alertConfig.onConfirm();
+          hideAlert();
+        }}
+      />
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#fff",
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerTitle: {
+    color: "#000",
+    fontSize: 30,
+    fontWeight: "600",
+    flex: 1,
+    textAlign: "center",
+    fontFamily: "Sen_700Bold",
+  },
+  headerRight: {
+    width: 40,
   },
   listContainer: {
     padding: 16,
   },
   categoryItem: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 12,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#eee",
   },
-  categoryInfo: {
-    flex: 1,
+  categoryContent: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    flex: 1,
   },
   categoryImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+  },
+  categoryDetails: {
+    marginLeft: 12,
+    flex: 1,
   },
   categoryName: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: "500",
-    color: "#333",
+    color: "#000",
+    marginBottom: 4,
+  },
+  categoryPrice: {
+    fontSize: 14,
+    color: "#666",
   },
   categoryActions: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 8,
-  },
-  actionButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 4,
+    alignItems: 'center',
   },
   editButton: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#FFE5E5",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
   },
   deleteButton: {
-    backgroundColor: "#f44336",
+    backgroundColor: "#FFE5E5",
+    padding: 8,
+    borderRadius: 20,
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  actionButtonText: {
-    color: "#fff",
+  editButtonText: {
+    color: "#E60023",
     fontSize: 14,
     fontWeight: "500",
   },
   addButton: {
-    backgroundColor: "#2196F3",
+    backgroundColor: "#E60023",
     margin: 16,
     padding: 16,
     borderRadius: 8,
@@ -358,7 +433,23 @@ const styles = StyleSheet.create({
   addButtonText: {
     color: "#fff",
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: "600",
+  },
+  bottomNav: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    padding: 12,
+    backgroundColor: "#fff",
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+  },
+  navItem: {
+    alignItems: "center",
+  },
+  navText: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 4,
   },
   modalContainer: {
     flex: 1,
@@ -368,36 +459,46 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: "#fff",
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 20,
     width: "90%",
     maxWidth: 400,
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 16,
+    fontWeight: "600",
+    marginBottom: 20,
     textAlign: "center",
+    color: "#000",
   },
   input: {
-    backgroundColor: "#f5f5f5",
-    borderRadius: 4,
+    backgroundColor: "#F5F5F5",
+    borderRadius: 8,
     padding: 12,
     marginBottom: 16,
     fontSize: 16,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+  },
+  imageButton: {
+    backgroundColor: "#4CAF50",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  imageButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "500",
   },
   selectedImage: {
     width: "100%",
     height: 200,
     borderRadius: 8,
     marginBottom: 16,
-  },
-  imageButton: {
-    backgroundColor: "#4CAF50",
-    padding: 12,
-    borderRadius: 4,
-    alignItems: "center",
-    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
   },
   modalButtons: {
     flexDirection: "row",
@@ -407,16 +508,21 @@ const styles = StyleSheet.create({
   modalButton: {
     flex: 1,
     padding: 12,
-    borderRadius: 4,
+    borderRadius: 8,
     alignItems: "center",
   },
   cancelButton: {
-    backgroundColor: "#9e9e9e",
+    backgroundColor: "#E0E0E0",
   },
   saveButton: {
-    backgroundColor: "#2196F3",
+    backgroundColor: "#E60023",
   },
-  buttonText: {
+  cancelButtonText: {
+    color: "#000",
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  saveButtonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "500",

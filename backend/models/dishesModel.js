@@ -25,11 +25,11 @@ const getAllDishes = () => {
   });
 };
 
-const createDish = (categoryId, name, description, price, image) => {
+const createDish = (categoryId, name, description, price, image, status = 'active') => {
   return new Promise((resolve, reject) => {
     db.run(
-      'INSERT INTO Dishes (category_id, name, description, price, image) VALUES (?, ?, ?, ?, ?)',
-      [categoryId, name, description, price, image],
+      'INSERT INTO Dishes (category_id, name, description, price, image, status) VALUES (?, ?, ?, ?, ?, ?)',
+      [categoryId, name, description, price, image, status],
       function (err) {
         if (err) reject(err);
         else resolve(this.lastID);
@@ -38,7 +38,7 @@ const createDish = (categoryId, name, description, price, image) => {
   });
 };
 
-const updateDish = async (id, categoryId, name, description, price, image) => {
+const updateDish = async (id, categoryId, name, description, price, image, status) => {
   try {
     // Lấy thông tin món ăn hiện tại
     const currentDish = await getDishById(id);
@@ -52,8 +52,8 @@ const updateDish = async (id, categoryId, name, description, price, image) => {
     // Cập nhật thông tin món ăn
     return new Promise((resolve, reject) => {
       db.run(
-        'UPDATE Dishes SET category_id = ?, name = ?, description = ?, price = ?, image = ? WHERE id = ?',
-        [categoryId, name, description, price, updatedImage, id],
+        'UPDATE Dishes SET category_id = ?, name = ?, description = ?, price = ?, image = ?, status = ? WHERE id = ?',
+        [categoryId, name, description, price, updatedImage, status, id],
         (err) => {
           if (err) {
             reject(err);
@@ -64,7 +64,8 @@ const updateDish = async (id, categoryId, name, description, price, image) => {
               name,
               description,
               price,
-              image: updatedImage
+              image: updatedImage,
+              status
             });
           }
         }
@@ -73,6 +74,19 @@ const updateDish = async (id, categoryId, name, description, price, image) => {
   } catch (error) {
     throw error;
   }
+};
+
+const updateDishStatus = (id, status) => {
+  return new Promise((resolve, reject) => {
+    db.run(
+      'UPDATE Dishes SET status = ? WHERE id = ?',
+      [status, id],
+      (err) => {
+        if (err) reject(err);
+        else resolve();
+      }
+    );
+  });
 };
 
 const deleteDish = (id) => {
@@ -118,6 +132,7 @@ module.exports = {
   getAllDishes,
   createDish,
   updateDish,
+  updateDishStatus,
   deleteDish,
   getDishById,
   searchDishes,

@@ -117,8 +117,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#f5f5f5",
+   
   },
   backButton: {
     width: 40,
@@ -127,7 +126,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   headerTitle: {
-    fontSize: 35,
+    fontSize: 25,
     fontWeight: "600",
     color: "#000",
     fontFamily: "Inter_700Bold",
@@ -143,10 +142,11 @@ const styles = StyleSheet.create({
   categoryWrapper: {
     width: ITEM_SIZE,
     alignItems: 'center',
+    paddingTop:20,
   },
   categoryItem: {
-    width: ITEM_SIZE,
-    height: ITEM_SIZE,
+    width: ITEM_SIZE*0.8,
+    height: ITEM_SIZE*0.8,
     backgroundColor: "#fff",
     borderRadius: 24,
     padding: 12,

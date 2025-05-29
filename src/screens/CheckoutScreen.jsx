@@ -6,7 +6,6 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  Alert,
   Image,
   Linking,
   ActivityIndicator,
@@ -19,6 +18,7 @@ import { API_ENDPOINTS, BASE_URL } from '../constants/api';
 import { Sen_700Bold } from '@expo-google-fonts/sen';
 import { useFonts } from 'expo-font';
 import * as WebBrowser from 'expo-web-browser';
+import CustomAlert from '../components/customAlert';
 
 const PaymentMethodCard = ({ selected, onSelect, icon, title, description }) => (
   <TouchableOpacity
@@ -53,6 +53,28 @@ const CheckoutScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('cod');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
+
+  const showAlert = (title, message, onConfirm = () => {}) => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      onConfirm,
+    });
+  };
+
+  const hideAlert = () => {
+    setAlertConfig({
+      ...alertConfig,
+      visible: false,
+    });
+  };
 
   useEffect(() => {
     if (user) {
@@ -66,24 +88,14 @@ const CheckoutScreen = ({ navigation }) => {
   });
 
   const shippingFee = 20000;
-  const tax = getTotalPrice() * 0.08; // 8% VAT
+  const tax = getTotalPrice() * 0.08;
   const totalAmount = getTotalPrice() + shippingFee + tax;
 
   const handleRemoveItem = (itemId) => {
-    Alert.alert(
+    showAlert(
       'Xác nhận',
       'Bạn có chắc chắn muốn xóa sản phẩm này?',
-      [
-        {
-          text: 'Hủy',
-          style: 'cancel',
-        },
-        {
-          text: 'Xóa',
-          onPress: () => removeFromCart(itemId),
-          style: 'destructive',
-        },
-      ]
+      () => removeFromCart(itemId)
     );
   };
 
@@ -110,73 +122,51 @@ const CheckoutScreen = ({ navigation }) => {
       
       if (response.ok && result && result.includes('vnpayment.vn')) {
         try {
-          // Mở URL trong trình duyệt web và đợi nó đóng
           const { type } = await WebBrowser.openBrowserAsync(result);
           console.log('Browser closed with type:', type);
           
-          // Đảm bảo hiển thị thông báo thành công
           setTimeout(() => {
-            Alert.alert(
+            showAlert(
               'Thành công',
               'Thanh toán thành công!',
-              [
-                {
-                  text: 'OK',
-                  onPress: () => {
-                    clearCart();
-                    navigation.reset({
-                      index: 0,
-                      routes: [{ name: 'BottomTabNavigator' }],
-                    });
-                  },
-                },
-              ],
-              { cancelable: false }
+              () => {
+                clearCart();
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'BottomTabNavigator' }],
+                });
+              }
             );
           }, 500);
         } catch (browserError) {
           console.error('Browser error:', browserError);
-          // Vẫn hiển thị thông báo thành công ngay cả khi có lỗi browser
-          Alert.alert(
+          showAlert(
             'Thành công',
             'Thanh toán thành công!',
-            [
-              {
-                text: 'OK',
-                onPress: () => {
-                  clearCart();
-                  navigation.reset({
-                    index: 0,
-                    routes: [{ name: 'BottomTabNavigator' }],
-                  });
-                },
-              },
-            ],
-            { cancelable: false }
-          );
-        }
-      } else {
-        Alert.alert('Lỗi', 'Không thể khởi tạo thanh toán VNPay');
-      }
-    } catch (error) {
-      console.error('VNPay payment error:', error);
-      // Vẫn hiển thị thông báo thành công ngay cả khi có lỗi
-      Alert.alert(
-        'Thành công',
-        'Thanh toán thành công!',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
+            () => {
               clearCart();
               navigation.reset({
                 index: 0,
                 routes: [{ name: 'BottomTabNavigator' }],
               });
-            },
-          },
-        ],
-        { cancelable: false }
+            }
+          );
+        }
+      } else {
+        showAlert('Lỗi', 'Không thể khởi tạo thanh toán VNPay');
+      }
+    } catch (error) {
+      console.error('VNPay payment error:', error);
+      showAlert(
+        'Thành công',
+        'Thanh toán thành công!',
+        () => {
+          clearCart();
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'BottomTabNavigator' }],
+          });
+        }
       );
     } finally {
       setLoading(false);
@@ -185,12 +175,12 @@ const CheckoutScreen = ({ navigation }) => {
 
   const handlePlaceOrder = async () => {
     if (!address.trim() || !phone.trim()) {
-      Alert.alert('Thông báo', 'Vui lòng nhập đầy đủ thông tin giao hàng');
+      showAlert('Thông báo', 'Vui lòng nhập đầy đủ thông tin giao hàng');
       return;
     }
 
     if (!/^[0-9]{10}$/.test(phone)) {
-      Alert.alert('Thông báo', 'Số điện thoại không hợp lệ');
+      showAlert('Thông báo', 'Số điện thoại không hợp lệ');
       return;
     }
 
@@ -224,21 +214,16 @@ const CheckoutScreen = ({ navigation }) => {
         if (paymentMethod === 'vnpay') {
           await handleVNPayPayment(result.orderId, totalAmount);
         } else {
-          Alert.alert('Thành công', 'Đặt hàng thành công!', [
-            {
-              text: 'OK',
-              onPress: () => {
-                clearCart();
-                navigation.navigate('BottomTabNavigator');
-              },
-            },
-          ]);
+          showAlert('Thành công', 'Đặt hàng thành công!', () => {
+            clearCart();
+            navigation.navigate('BottomTabNavigator');
+          });
         }
       } else {
-        Alert.alert('Lỗi', result.error || 'Đặt hàng thất bại');
+        showAlert('Lỗi', result.error || 'Đặt hàng thất bại');
       }
     } catch (error) {
-      Alert.alert('Lỗi', 'Không thể đặt hàng, vui lòng thử lại!');
+      showAlert('Lỗi', 'Không thể đặt hàng, vui lòng thử lại!');
     } finally {
       setLoading(false);
     }
@@ -252,43 +237,33 @@ const CheckoutScreen = ({ navigation }) => {
         console.log('Received URL:', url);
 
         if (url.includes('payment/vnpay')) {
-          // Parse URL để lấy thông tin thanh toán
           const urlObj = new URL(url);
           const params = Object.fromEntries(urlObj.searchParams);
           
-          // Format số tiền
-          const amount = parseInt(params.amount || '0') / 100; // VNPay trả về số tiền x100
+          const amount = parseInt(params.amount || '0') / 100;
           const formattedAmount = amount.toLocaleString('vi-VN', {
             style: 'currency',
             currency: 'VND'
           });
 
-          // Format thời gian
           const payDate = params.payDate || '';
           const formattedDate = payDate ? 
             `${payDate.slice(6, 8)}/${payDate.slice(4, 6)}/${payDate.slice(0, 4)} ${payDate.slice(8, 10)}:${payDate.slice(10, 12)}:${payDate.slice(12, 14)}` :
             '';
 
-          // Hiển thị thông tin thanh toán
-          Alert.alert(
+          showAlert(
             'Chi tiết thanh toán',
             `Số tiền: ${formattedAmount}\n` +
             `Ngân hàng: ${params.bankCode || ''}\n` +
             `Thời gian: ${formattedDate}\n` +
             `Nội dung: ${decodeURIComponent(params.orderInfo || '')}`,
-            [
-              {
-                text: 'OK',
-                onPress: () => {
-                  clearCart();
-                  navigation.reset({
-                    index: 0,
-                    routes: [{ name: 'BottomTabNavigator' }],
-                  });
-                },
-              },
-            ],
-            { cancelable: false }
+            () => {
+              clearCart();
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'BottomTabNavigator' }],
+              });
+            }
           );
         }
       } catch (error) {
@@ -479,6 +454,17 @@ const CheckoutScreen = ({ navigation }) => {
           </Text>
         </TouchableOpacity>
       </View>
+
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        onClose={hideAlert}
+        onConfirm={() => {
+          alertConfig.onConfirm();
+          hideAlert();
+        }}
+      />
     </SafeAreaView>
   );
 };

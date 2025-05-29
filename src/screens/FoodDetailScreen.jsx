@@ -7,6 +7,7 @@ import {
   StyleSheet,
   SafeAreaView,
   Dimensions,
+  ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFonts } from "expo-font";
@@ -100,7 +101,7 @@ const FoodDetailScreen = ({ route, navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScrollView style={styles.container}>
       {/* Nút Back */}
      <TouchableOpacity 
                style={styles.backButton}
@@ -140,7 +141,7 @@ const FoodDetailScreen = ({ route, navigation }) => {
         <Text style={styles.addToCartText}>Thêm vào giỏ hàng</Text>
       </TouchableOpacity>
     </View>
-    </SafeAreaView>
+    </ScrollView>
   );
 };
 
@@ -199,6 +200,8 @@ const styles = StyleSheet.create({
       color: "#000",
       flex: 1, 
       marginHorizontal: 20,
+      marginBottom:10
+      
     },
     quantityContainer: {
       flexDirection: "row",

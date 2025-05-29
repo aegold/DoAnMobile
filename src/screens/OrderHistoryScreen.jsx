@@ -135,7 +135,7 @@ const OrderHistoryScreen = ({ navigation }) => {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="chevron-back" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.title}>Lịch sử đơn hàng</Text>
         <View style={styles.rightHeader} />
@@ -178,12 +178,11 @@ const OrderHistoryScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fff',
   },
   header: {
     padding: 16,
-    backgroundColor: '#E60023',
-    elevation: 4,
+  
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -199,7 +198,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    color: '#fff',
+    color: '#000',
     fontFamily: 'Sen_700Bold',
     flex: 1,
     textAlign: 'center',

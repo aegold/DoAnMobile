@@ -10,15 +10,17 @@ const getDishesByCategory = async(req, res) => {
   const categoryId = req.params.categoryId;
   await dishesModel.getDishesByCategory(categoryId)
     .then(dishes => {
-      console.log('Sending dishes to client:', dishes);
-      res.json(dishes);
+      const activeDishes = dishes.filter(dish => dish.status === 'active');
+      console.log('Sending dishes to client:', activeDishes);
+      res.json(activeDishes);
     })
     .catch(err => res.status(500).json({ error: err.message }));
 }
 const getAllDishes = async (req, res) => {
   try {
     const dishes = await dishesModel.getAllDishes();
-    res.json(dishes);
+    const activeDishes = dishes.filter(dish => dish.status === 'active');
+    res.json(activeDishes);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -35,7 +37,8 @@ const createDish = async (req, res) => {
       name,
       description || '',
       parseFloat(price),
-      image
+      image,
+      'active'
     );
     res.json({ message: 'Thêm món ăn thành công', id: dishId });
   } catch (err) {
@@ -50,18 +53,42 @@ const updateDish = async (req, res) => {
     return res.status(400).json({ error: 'categoryId, name và price là bắt buộc' });
   }
   try {
+    const existingDish = await dishesModel.getDishById(id);
+    if (!existingDish) {
+      return res.status(404).json({ error: 'Không tìm thấy món ăn' });
+    }
+
     const image = req.file ? `/public/images/${req.file.filename}` : req.body.image;
-    await dishesModel.updateDish(id, categoryId, name, description, price, image);
+    await dishesModel.updateDish(
+      id, 
+      categoryId, 
+      name, 
+      description, 
+      price, 
+      image,
+      existingDish.status
+    );
     res.json({ message: 'Cập nhật món ăn thành công' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 }
-const deleteDish = async (req, res) => {
+const updateDishStatus = async (req, res) => {
   const { id } = req.params;
   try {
-    await dishesModel.deleteDish(id);
-    res.json({ message: 'Xóa món ăn thành công' });
+    const existingDish = await dishesModel.getDishById(id);
+    if (!existingDish) {
+      return res.status(404).json({ error: 'Không tìm thấy món ăn' });
+    }
+
+    await dishesModel.updateDishStatus(id, 'inactive');
+    res.json({ 
+      message: 'Đã ẩn món ăn thành công',
+      dish: {
+        id,
+        status: 'inactive'
+      }
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -72,8 +99,9 @@ const searchDishes = async(req, res) => {
   console.log('Extracted query:', query);
   await dishesModel.searchDishes(query)
     .then(results => {
-      console.log('Sending search results to client:', results);
-      res.json(results);
+      const activeResults = results.filter(dish => dish.status === 'active');
+      console.log('Sending search results to client:', activeResults);
+      res.json(activeResults);
     })
     .catch(err => res.status(500).json({ error: err.message }));
 }
@@ -82,6 +110,6 @@ module.exports = {
     getAllDishes,
     createDish,
     updateDish,
-    deleteDish,
+    updateDishStatus,
     searchDishes
 }

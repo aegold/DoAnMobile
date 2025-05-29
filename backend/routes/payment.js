@@ -188,12 +188,6 @@ router.get('/vnpay_return', function (req, res, next) {
                             <p><strong>Thời gian:</strong> <span>${paymentDate}</span></p>
                             <p><strong>Nội dung:</strong> <span>${vnp_OrderInfo}</span></p>
                         </div>
-
-                        <div class="instructions">
-                            <p><strong>Hướng dẫn:</strong></p>
-                            <p>1. Vuốt xuống từ đầu màn hình để hiện thanh điều hướng Chrome</p>
-                            <p>2. Nhấn nút X hoặc nút đóng tab để quay lại ứng dụng</p>
-                        </div>
                     </div>
                 </body>
             </html>

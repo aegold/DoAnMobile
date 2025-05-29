@@ -3,7 +3,7 @@ const router = express.Router();
 const dishesModel = require('../models/dishesModel');
 const { authenticateToken, checkRole } = require('../middlewares/auth');
 const { upload, handleUploadError } = require('../middlewares/upload');
-const { getDishesByCategory, getAllDishes, createDish, updateDish,deleteDish,searchDishes } = require('../controller/dishesController');
+const { getDishesByCategory, getAllDishes, createDish, updateDish, updateDishStatus, searchDishes } = require('../controller/dishesController');
 // API lấy danh sách món ăn theo danh mục
 router.get('/dishes/:categoryId',getDishesByCategory);
 
@@ -15,7 +15,9 @@ router.post('/dishes', authenticateToken, checkRole(['admin']), upload.single('i
 
 router.put('/dishes/:id', authenticateToken, checkRole(['admin']), upload.single('image'), updateDish );
 
-router.delete('/dishes/:id', authenticateToken, checkRole(['admin']), deleteDish);
+// Cập nhật status của món ăn
+router.put('/dishes/:id/status', authenticateToken, checkRole(['admin']), updateDishStatus);
+
 router.get('/search', searchDishes);
 
 module.exports = router;

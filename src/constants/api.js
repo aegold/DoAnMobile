@@ -5,7 +5,9 @@ const BASE_URL = 'http://192.168.31.104:3000';
 
 const API_ENDPOINTS = {
   CATEGORIES: `${BASE_URL}/api/categories`,
+  CATEGORY_STATUS: (categoryId) => `${BASE_URL}/api/categories/${categoryId}/status`,
   DISHES: (categoryId) => categoryId === 'all' ? `${BASE_URL}/api/dishes` : `${BASE_URL}/api/dishes/${categoryId}`,
+  DISH_STATUS: (dishId) => `${BASE_URL}/api/dishes/${dishId}/status`,
   CART: `${BASE_URL}/api/cart`,
   ADD_TO_CART: `${BASE_URL}/api/cart/add`,
   UPDATE_CART: `${BASE_URL}/api/cart/update`,

@@ -12,59 +12,82 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { BASE_URL, API_ENDPOINTS } from '../constants/api';
 import { useAuth } from '../context/AuthContext';
+import CustomAlert from '../components/customAlert'; // Import CustomAlert
 
 const AdminOrderDetailScreen = ({ navigation, route }) => {
   const { order } = route.params;
   const { fetchWithAuth } = useAuth();
   const [currentStatus, setCurrentStatus] = useState(order.status);
+  
+  // State for CustomAlert
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
+  const [pendingStatus, setPendingStatus] = useState('');
 
   const handleUpdateStatus = async (newStatus) => {
-    Alert.alert(
-      'Xác nhận',
-      `Bạn có chắc chắn muốn ${newStatus === 'Đã hủy' ? 'hủy' : 'xác nhận'} đơn hàng này?`,
-      [
-        {
-          text: 'Không',
-          style: 'cancel',
-        },
-        {
-          text: 'Có',
-          onPress: async () => {
-            try {
-              console.log('Calling API:', API_ENDPOINTS.UPDATE_ORDER_STATUS(order.id));
-              const response = await fetchWithAuth(API_ENDPOINTS.UPDATE_ORDER_STATUS(order.id), {
-                method: 'PUT',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ status: newStatus }),
-              });
+    // Set up custom alert
+    setAlertTitle('Xác nhận');
+    setAlertMessage(`Bạn có chắc chắn muốn ${newStatus === 'Đã hủy' ? 'hủy' : 'xác nhận'} đơn hàng này?`);
+    setPendingStatus(newStatus);
+    setAlertVisible(true);
+  };
 
-              if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Không thể cập nhật trạng thái đơn hàng');
-              }
-
-              const data = await response.json();
-              setCurrentStatus(newStatus);
-              Alert.alert(
-                'Thành công', 
-                `Đã ${newStatus === 'Đã hủy' ? 'hủy' : 'xác nhận'} đơn hàng thành công`,
-                [
-                  {
-                    text: 'OK',
-                    onPress: () => navigation.goBack(),
-                  },
-                ]
-              );
-            } catch (error) {
-              console.error('Error updating order status:', error);
-              Alert.alert('Lỗi', error.message || 'Có lỗi xảy ra khi cập nhật trạng thái');
-            }
-          },
+  const confirmUpdateStatus = async () => {
+    setAlertVisible(false);
+    
+    try {
+      console.log('Calling API:', API_ENDPOINTS.UPDATE_ORDER_STATUS(order.id));
+      const response = await fetchWithAuth(API_ENDPOINTS.UPDATE_ORDER_STATUS(order.id), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      ],
-    );
+        body: JSON.stringify({ status: pendingStatus }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Không thể cập nhật trạng thái đơn hàng');
+      }
+
+      const data = await response.json();
+      setCurrentStatus(pendingStatus);
+      
+      // Show success alert
+      setAlertTitle('Thành công');
+      setAlertMessage(`Đã ${pendingStatus === 'Đã hủy' ? 'hủy' : 'xác nhận'} đơn hàng thành công`);
+      setPendingStatus('SUCCESS');
+      setAlertVisible(true);
+      
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      
+      // Show error alert
+      setAlertTitle('Lỗi');
+      setAlertMessage(error.message || 'Có lỗi xảy ra khi cập nhật trạng thái');
+      setPendingStatus('ERROR');
+      setAlertVisible(true);
+    }
+  };
+
+  const handleAlertClose = () => {
+    setAlertVisible(false);
+    
+    // Navigate back if it was a success alert
+    if (pendingStatus === 'SUCCESS') {
+      navigation.goBack();
+    }
+    
+    setPendingStatus('');
+  };
+
+  const handleAlertConfirm = () => {
+    if (pendingStatus === 'SUCCESS' || pendingStatus === 'ERROR') {
+      handleAlertClose();
+    } else {
+      confirmUpdateStatus();
+    }
   };
 
   return (
@@ -74,9 +97,9 @@ const AdminOrderDetailScreen = ({ navigation, route }) => {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="chevron-back" size={24} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.title}>Quản lý đơn hàng</Text>
+        <Text style={styles.title}>Chi tiết đơn hàng</Text>
         <View style={styles.rightHeader} />
       </View>
 
@@ -173,6 +196,15 @@ const AdminOrderDetailScreen = ({ navigation, route }) => {
           </Text>
         </View>
       </ScrollView>
+
+      {/* Custom Alert */}
+      <CustomAlert
+        visible={alertVisible}
+        onClose={handleAlertClose}
+        title={alertTitle}
+        message={alertMessage}
+        onConfirm={handleAlertConfirm}
+      />
     </SafeAreaView>
   );
 };
@@ -180,12 +212,10 @@ const AdminOrderDetailScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fff',
   },
   header: {
     padding: 16,
-    backgroundColor: '#E60023',
-    elevation: 4,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -200,8 +230,8 @@ const styles = StyleSheet.create({
     width: 40,
   },
   title: {
-    fontSize: 20,
-    color: '#fff',
+    fontSize: 30,
+    color: '#000',
     fontFamily: 'Sen_700Bold',
     flex: 1,
     textAlign: 'center',
@@ -339,4 +369,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AdminOrderDetailScreen; 
+export default AdminOrderDetailScreen;

@@ -42,7 +42,7 @@ const register = (username, password, fullname, email, phone, address, image, ro
 
           // Thêm user mới
           db.run(
-            "INSERT INTO Users (username, password, fullname, email, phone, address, image, role) VALUES (?,?,?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO Users (username, password, fullname, email, phone, address, image, role) VALUES (?,?,?, ?, ?, ?, ?, ?)",
             [username, hashedPassword, fullname, email, phone, address,image,role],
             function (err) {
               if (err) {

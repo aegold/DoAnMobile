@@ -5,15 +5,18 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   Image,
   Platform,
+  SafeAreaView,
+  StatusBar,
+  ScrollView,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { useAuth } from "../context/AuthContext";
 import { BASE_URL } from "../constants/api";
-import * as ImagePicker from "expo-image-picker";
-import { ScrollView } from "react-native-gesture-handler";
+import * as DocumentPicker from 'expo-document-picker';
+import { Ionicons } from "@expo/vector-icons";
+import CustomAlert from "../components/customAlert";
 
 const EditDishScreen = ({ route, navigation }) => {
   const { fetchWithAuth } = useAuth();
@@ -27,6 +30,28 @@ const EditDishScreen = ({ route, navigation }) => {
   );
   const [selectedImage, setSelectedImage] = useState(null);
   const [currentImage, setCurrentImage] = useState(dish.image || "");
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
+
+  const showAlert = (title, message, onConfirm = () => {}) => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      onConfirm,
+    });
+  };
+
+  const hideAlert = () => {
+    setAlertConfig({
+      ...alertConfig,
+      visible: false,
+    });
+  };
 
   useEffect(() => {
     fetchCategories();
@@ -53,51 +78,45 @@ const EditDishScreen = ({ route, navigation }) => {
       } else {
         const errorData = await response.json();
         console.log("Lỗi khi lấy danh mục:", errorData);
-        Alert.alert("Lỗi", "Không thể lấy danh sách danh mục");
+        showAlert("Lỗi", "Không thể lấy danh sách danh mục");
       }
     } catch (err) {
       console.error("Chi tiết lỗi khi lấy danh mục:", err);
       if (err.message.includes("Network request failed")) {
-        Alert.alert("Lỗi kết nối", "Không thể kết nối tới server.");
+        showAlert("Lỗi kết nối", "Không thể kết nối tới server.");
       } else {
-        Alert.alert("Lỗi", "Có lỗi xảy ra: " + err.message);
+        showAlert("Lỗi", "Có lỗi xảy ra: " + err.message);
       }
     }
   };
 
   const handleSelectImage = async () => {
     try {
-      const { status } =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-      if (status !== "granted") {
-        Alert.alert(
-          "Cần quyền truy cập",
-          "Ứng dụng cần quyền truy cập vào thư viện ảnh của bạn"
-        );
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 0.8,
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'image/*',
+        copyToCacheDirectory: true,
+        multiple: false
       });
-
+  
       if (!result.canceled) {
-        setSelectedImage(result.assets[0]);
-        setCurrentImage(result.assets[0].uri);
+        const file = result.assets[0];
+        setSelectedImage({
+          uri: file.uri,
+          name: file.name,
+          size: file.size,
+          mimeType: file.mimeType || 'image/jpeg',
+        });
+        setCurrentImage(file.uri);
       }
     } catch (error) {
       console.error("Lỗi khi chọn ảnh:", error);
-      Alert.alert("Lỗi", "Không thể chọn ảnh");
+      showAlert("Lỗi", "Không thể chọn ảnh");
     }
   };
 
   const handleUpdateDish = async () => {
     if (!name || !price || !categoryId) {
-      Alert.alert("Lỗi", "Tên, giá và danh mục là bắt buộc");
+      showAlert("Lỗi", "Tên, giá và danh mục là bắt buộc");
       return;
     }
 
@@ -158,144 +177,240 @@ const EditDishScreen = ({ route, navigation }) => {
 
       console.log("Trạng thái phản hồi cập nhật:", response.status);
       if (response.ok) {
-        Alert.alert("Thành công", "Cập nhật món ăn thành công");
-        if (onUpdate) {
-          onUpdate();
-        }
-        navigation.goBack();
+        showAlert("Thành công", "Cập nhật món ăn thành công", () => {
+          if (onUpdate) {
+            onUpdate();
+          }
+          navigation.goBack();
+        });
       } else {
         const result = await response.json();
         console.log("Lỗi khi cập nhật:", result);
-        Alert.alert("Lỗi", result.error || "Không thể cập nhật món ăn");
+        showAlert("Lỗi", result.error || "Không thể cập nhật món ăn");
       }
     } catch (err) {
       console.error("Chi tiết lỗi khi cập nhật:", err);
       if (err.message.includes("Network request failed")) {
-        Alert.alert("Lỗi kết nối", "Không thể kết nối tới server.");
+        showAlert("Lỗi kết nối", "Không thể kết nối tới server.");
       } else {
-        Alert.alert("Lỗi", "Có lỗi xảy ra: " + err.message);
+        showAlert("Lỗi", "Có lỗi xảy ra: " + err.message);
       }
     }
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Sửa món ăn</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Tên món ăn"
-        value={name}
-        onChangeText={setName}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Mô tả"
-        value={description}
-        onChangeText={setDescription}
-        multiline
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Giá (VNĐ)"
-        value={price}
-        onChangeText={setPrice}
-        keyboardType="numeric"
-      />
-      <View style={styles.pickerContainer}>
-        <Text style={styles.label}>Danh mục:</Text>
-        <Picker
-          selectedValue={categoryId}
-          onValueChange={(itemValue) => setCategoryId(itemValue)}
-          style={styles.picker}
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
         >
-          {categories.map((category) => (
-            <Picker.Item
-              key={category.id}
-              label={category.name}
-              value={category.id.toString()}
-            />
-          ))}
-        </Picker>
+          <Ionicons name="chevron-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Sửa món ăn</Text>
+        <View style={styles.headerRight} />
       </View>
 
-      <TouchableOpacity style={styles.imageButton} onPress={handleSelectImage}>
-        <Text style={styles.buttonText}>Chọn ảnh mới</Text>
-      </TouchableOpacity>
+      <ScrollView style={styles.content}>
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Tên món ăn</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Nhập tên món ăn"
+            value={name}
+            onChangeText={setName}
+          />
+        </View>
 
-      {currentImage && (
-        <Image source={{ uri: currentImage }} style={styles.previewImage} />
-      )}
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Mô tả</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Nhập mô tả món ăn"
+            value={description}
+            onChangeText={setDescription}
+            multiline
+            numberOfLines={4}
+          />
+        </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleUpdateDish}>
-        <Text style={styles.buttonText}>Cập nhật món ăn</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Giá (VNĐ)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Nhập giá món ăn"
+            value={price}
+            onChangeText={setPrice}
+            keyboardType="numeric"
+          />
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Danh mục</Text>
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={categoryId}
+              onValueChange={(itemValue) => setCategoryId(itemValue)}
+              style={styles.picker}
+            >
+              <Picker.Item label="Chọn danh mục" value="" />
+              {categories.map((category) => (
+                <Picker.Item
+                  key={category.id}
+                  label={category.name}
+                  value={category.id.toString()}
+                />
+              ))}
+            </Picker>
+          </View>
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Hình ảnh món ăn</Text>
+          <TouchableOpacity 
+            style={styles.imageButton} 
+            onPress={handleSelectImage}
+          >
+            <Ionicons name="image-outline" size={24} color="#fff" />
+            <Text style={styles.imageButtonText}>Chọn ảnh mới</Text>
+            
+          </TouchableOpacity>
+
+          {currentImage && (
+            <View style={styles.imagePreviewContainer}>
+              <Image
+                source={{ uri: `${BASE_URL}${currentImage}` }}
+                style={styles.previewImage}
+              />
+            </View>
+          )}
+        </View>
+
+        <TouchableOpacity 
+          style={styles.submitButton} 
+          onPress={handleUpdateDish}
+        >
+          <Text style={styles.submitButtonText}>Cập nhật món ăn</Text>
+        </TouchableOpacity>
+      </ScrollView>
+
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        onClose={hideAlert}
+        onConfirm={() => {
+          alertConfig.onConfirm();
+          hideAlert();
+        }}
+      />
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: "#f5f5f5",
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 20,
-    color: "#333",
-  },
-  input: {
     backgroundColor: "#fff",
-    borderRadius: 5,
-    padding: 10,
-    marginVertical: 10,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: "#ddd",
   },
-  pickerContainer: {
-    marginVertical: 10,
+  header: {
+    
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+   
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerTitle: {
+    color: "#000",
+    fontSize: 30,
+    fontWeight: "600",
+    flex: 1,
+    textAlign: "center",
+  },
+  headerRight: {
+    width: 40,
+  },
+  content: {
+    flex: 1,
+    padding: 16,
+  },
+  formGroup: {
+    marginBottom: 20,
   },
   label: {
     fontSize: 16,
+    fontWeight: "500",
     color: "#333",
-    marginBottom: 5,
+    marginBottom: 8,
   },
-  picker: {
+  input: {
     backgroundColor: "#fff",
-    borderRadius: 5,
+    borderRadius: 8,
+    padding: 12,
     borderWidth: 1,
     borderColor: "#ddd",
-  },
-  button: {
-    backgroundColor: "#e91e63",
-    padding: 15,
-    borderRadius: 5,
-    alignItems: "center",
-    marginVertical: 10,
-  
-  },
-  buttonText: {
-    color: "#fff",
     fontSize: 16,
-    fontWeight: "bold",
-    
+  },
+  textArea: {
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  pickerContainer: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    overflow: 'hidden',
+  },
+  picker: {
+    height: 50,
   },
   imageButton: {
     backgroundColor: "#4CAF50",
-    padding: 15,
-    borderRadius: 5,
+    flexDirection: "row",
     alignItems: "center",
-    marginVertical: 10,
+    justifyContent: "center",
+    padding: 12,
+    borderRadius: 8,
+    gap: 8,
+  },
+  imageButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  imagePreviewContainer: {
+    marginTop: 12,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: "#ddd",
   },
   previewImage: {
     width: "100%",
     height: 200,
     resizeMode: "cover",
-    borderRadius: 5,
-    marginVertical: 10,
+  },
+  submitButton: {
+    backgroundColor: "#E60023",
+    padding: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  submitButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
 

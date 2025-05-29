@@ -22,7 +22,7 @@ function runSQL(sql, params = []) {
 
 async function setupDatabase() {
   try {
-    // // Xóa bảng cũ để đảm bảo dữ liệu mới
+    // Xóa bảng cũ để đảm bảo dữ liệu mới
     // await runSQL('DROP TABLE IF EXISTS Categories');
     // await runSQL('DROP TABLE IF EXISTS Dishes');
     // await runSQL('DROP TABLE IF EXISTS cart');
@@ -35,7 +35,8 @@ async function setupDatabase() {
     //   CREATE TABLE IF NOT EXISTS Categories (
     //     id INTEGER PRIMARY KEY AUTOINCREMENT,
     //     name TEXT NOT NULL,
-    //     image TEXT
+    //     image TEXT,
+    //     status TEXT DEFAULT 'active'
     //   )
     // `);
     // // Tạo bảng Dishes
@@ -47,6 +48,7 @@ async function setupDatabase() {
     //     description TEXT,
     //     price REAL,
     //     image TEXT,
+    //     status TEXT DEFAULT 'active',
     //     FOREIGN KEY (category_id) REFERENCES Categories(id)
     //   )
     // `);
@@ -105,7 +107,29 @@ async function setupDatabase() {
     //     FOREIGN KEY (dish_id) REFERENCES Dishes(id)
     //   )
     // `);
-    // // // Thêm dữ liệu mẫu vào Categories
+    
+    // // );
+    // // Mã hóa mật khẩu cho admin và customer
+    // const adminPassword = await bcrypt.hash('admin123', 10);
+    // // const customerPassword = await bcrypt.hash('customer123', 10);
+    // // Thêm dữ liệu mẫu vào Users với mật khẩu đã mã hóa
+    // await runSQL(
+    //   'INSERT INTO Users (username, password, fullname, email, phone, address, role) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    //   ['admin', adminPassword, 'Administrator', 'buithaibao2k4@gmail.com', '0909090909', 'Hà Nội', 'admin']
+    // );
+    
+
+
+
+
+
+
+
+
+
+
+
+    // // Thêm dữ liệu mẫu vào Categories
     // await runSQL(
     //   'INSERT INTO Categories (name, image) VALUES (?, ?)',
     //   ['Hamburger', '/public/images/hamburger-icon.png']
@@ -144,19 +168,6 @@ async function setupDatabase() {
     // await runSQL(
     //   'INSERT INTO Dishes (category_id, name, description, price, image) VALUES (?, ?, ?, ?, ?)',
     //   [ 3, 'Combo gia đình ', '6 miếng gà', 180000, '/public/images/cha_gio.jpg']
-    // );
-    // // Mã hóa mật khẩu cho admin và customer
-    // const adminPassword = await bcrypt.hash('admin123', 10);
-    // const customerPassword = await bcrypt.hash('customer123', 10);
-    // // Thêm dữ liệu mẫu vào Users với mật khẩu đã mã hóa
-    // await runSQL(
-    //   'INSERT INTO Users (username, password, fullname, email, phone, address, role) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    //   ['admin', adminPassword, 'Administrator', 'buithaibao2k4@gmail.com', '0909090909', 'Hà Nội', 'admin']
-    // );
-    // await runSQL(
-    //   'INSERT INTO Users (username, password, fullname, email, phone, address, role) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    //   ['customer', customerPassword, 'Khách hàng', 'baobambilnd@gmail.com', '0904440436', 'Hà Nội', 'user']
-    // );
 
     console.log('Load database successfully!');
   } catch (err) {
